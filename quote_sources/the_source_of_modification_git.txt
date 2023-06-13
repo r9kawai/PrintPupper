@@ -1,0 +1,3 @@
+https://github.com/stanfordroboticsclub/StanfordQuadruped
+https://github.com/stanfordroboticsclub/PupperCommand
+https://github.com/stanfordroboticsclub/PS4Joystick
