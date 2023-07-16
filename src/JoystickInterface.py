@@ -1,14 +1,15 @@
-import UDPComms
+from socket import socket, AF_INET, SOCK_STREAM
+import select
+import pickle
 import numpy as np
 import time
 from State import BehaviorState, State
 from Command import Command
 from Utilities import deadband, clipped_first_order_filter
 
-
 class JoystickInterface:
     def __init__(
-        self, config, udp_port=8830, udp_publisher_port = 8840,
+        self, config, # udp_port=8830, udp_publisher_port = 8840,
     ):
         self.config = config
         self.previous_gait_toggle = 0
@@ -16,16 +17,37 @@ class JoystickInterface:
         self.previous_hop_toggle = 0
         self.previous_activate_toggle = 0
 
-        self.message_rate = 50
-        self.udp_handle = UDPComms.Subscriber(udp_port, timeout=1.0)
-        self.udp_publisher = UDPComms.Publisher(udp_publisher_port)
-
+        self.JOYSOCK_HOST = 'localhost'
+        self.JOYSOCK_PORT = 51000
+        self.JOYSOCK_MAX_DATA = 2048
+        self.joysock_connect = False
 
     def get_command(self, state, do_print=False):
+        command = Command()
+        if not self.joysock_connect:
+            try:
+                self.joysock = socket(AF_INET, SOCK_STREAM)
+                self.joysock.connect((self.JOYSOCK_HOST, self.JOYSOCK_PORT))
+                self.joysock_connect = True
+                self.last_msg = get_null_joymsg()
+                print('robo > joystick connect.')
+            except:
+                print('robo > joystick socket listen...')
+                time.sleep(1)
+                return command
+
         try:
-            msg = self.udp_handle.get()
-            command = Command()
-            
+            recv_ready, dummy_1, dummy_2 = select.select([self.joysock], [], [], 0)
+            if recv_ready:
+                msg_data = self.joysock.recv(self.JOYSOCK_MAX_DATA)
+                msg = pickle.loads(msg_data)
+                self.last_msg = msg
+            else:
+                msg = self.last_msg
+
+            if do_print:
+               print(msg)
+
             ####### Handle discrete commands ########
             # Check if requesting a state transition to trotting, or from trotting to resting
             gait_toggle = msg["R1"]
@@ -72,12 +94,34 @@ class JoystickInterface:
 
             return command
 
-        except UDPComms.timeout:
+        except:
             if do_print:
-                print("UDP Timed out")
+                print("unknown msg from joystick")
             return Command()
 
-
     def set_color(self, color):
-        joystick_msg = {"ps4_color": color}
-        self.udp_publisher.send(joystick_msg)
+#       print('robo > ', color)
+        try:
+            joystick_msg = {"ps4_color": color}
+            send_msg = pickle.dumps(joystick_msg)
+            self.joysock.send(send_msg)
+        except:
+            pass
+
+    def get_null_joymsg(self):
+        null_joymsg = {
+                "ly": 0,
+                "lx": 0,
+                "rx": 0,
+                "ry": 0,
+                "R1": False,
+                "L1": False,
+                "dpady": 0,
+                "dpadx": 0,
+                "x": False,
+                "square": False,
+                "circle": False,
+                "triangle": False,
+                "message_rate": 20,
+            }
+        return(null_joymsg)

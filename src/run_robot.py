@@ -7,6 +7,7 @@ from State import State
 from HardwareInterface import HardwareInterface
 from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
+from State import BehaviorState, State
 
 # PrintPupper
 import RPi.GPIO as GPIO
@@ -50,6 +51,7 @@ def main(use_imu=False):
     print("x shift: ", config.x_shift)
 
     # Wait until the activate button has been pressed
+    joystick_interface.set_color(config.ps4_deactivated_color)
     while True:
         # PrintPupper
         wait_loop = 0
@@ -67,7 +69,6 @@ def main(use_imu=False):
             wait_loop += 1
 
             command = joystick_interface.get_command(state)
-            joystick_interface.set_color(config.ps4_deactivated_color)
             if command.activate_event == 1:
                 break
             time.sleep(0.1)
@@ -75,12 +76,11 @@ def main(use_imu=False):
         print("Robot activated.")
         # PrintPupper
         GPIO.output(GPIO_LED_G, True)
-
-        joystick_interface.set_color(config.ps4_color)
-
+        joystick_interface.set_color(config.ps4_activated_color)
         while True:
             now = time.time()
             if now - last_loop < config.dt:
+                time.sleep(config.dt_sleep)
                 continue
             last_loop = time.time()
 
@@ -89,7 +89,20 @@ def main(use_imu=False):
             if command.activate_event == 1:
                 print("Deactivating Robot")
                 hardware_interface.deactivate()
+                joystick_interface.set_color(config.ps4_deactivated_color)
+                state.behavior_state = BehaviorState.REST
+                GPIO.output(GPIO_LED_B, False)
                 break
+
+            if command.trot_event:
+                if state.behavior_state == BehaviorState.REST:
+                    joystick_interface.set_color(config.ps4_torot_color)
+                    GPIO.output(GPIO_LED_B, True)
+                    print("Robot start torot")
+                else:
+                    joystick_interface.set_color(config.ps4_activated_color)
+                    GPIO.output(GPIO_LED_B, False)
+                    print("Robot stop torot")
 
             # Read imu data. Orientation will be None if no data was available
             quat_orientation = (
