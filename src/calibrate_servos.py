@@ -97,14 +97,16 @@ def calibrate_angle_offset(hardware_interface):
         PWMParams object.
     """
 
+    """
     # Found K value of (11.4)
     print("The scaling constant for your servo represents how much you have to increase\nthe pwm pulse width (in microseconds) to rotate the servo output 1 degree.")
-    print("This value is currently set to: {:.3f}".format(degrees_to_radians(hardware_interface.servo_params.micros_per_rad)))
+    print("This value is currently set to: {:.3f}".format(degrees_to_radians(hardware_interface.servo_params.pwm_usec_per_rad)))
     print("For newer CLS6336 and CLS6327 servos the value should be 11.333.")
     ks = input("Press <Enter> to keep the current value, or enter a new value: ")
     if ks != '':
         k = float(ks)
-        hardware_interface.servo_params.micros_per_rad = k * 180 / np.pi
+        hardware_interface.servo_params.pwm_usec_per_rad = k * 180 / np.pi
+    """
 
     hardware_interface.servo_params.neutral_angle_degrees = np.zeros((3, 4))
 
@@ -170,7 +172,7 @@ import numpy as np
     # Overwrite ServoCalibration.py file with modified values
     with open("ServoCalibration.py", "w") as f:
         print(preamble, file = f)
-        print("MICROS_PER_RAD = {:.3f} * 180.0 / np.pi".format(degrees_to_radians(servo_params.micros_per_rad)), file = f)
+#       print("MICROS_PER_RAD = {:.3f} * 180.0 / np.pi".format(degrees_to_radians(servo_params.micros_per_rad)), file = f)
         print("NEUTRAL_ANGLE_DEGREES = np.array(", file = f)
         print(formatted_matrix_with_required_commas, file = f)
         print(")", file = f)
