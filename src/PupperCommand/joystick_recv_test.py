@@ -17,9 +17,21 @@ while not joysock_connect:
         print('no joystick socket listen')
     time.sleep(1)
 
+remain_data = True
+while remain_data:
+    try:
+        recv_ready, dummy_1, dummy2 = select.select([joysock], [], [], 0)
+        if recv_ready:
+            trash_data = joysock.recv(JOYSOCK_MAX_DATA)
+        else:
+            remain_data = False
+    except:
+        pass
+
 rate_counter = 0
 rate_counter_start = time.perf_counter()
 rate_counter_time = 0
+btn_L1 = False
 while joysock_connect:
     if rate_counter >= MESSAGE_RATE:
         rate_counter_end = time.perf_counter()
@@ -34,9 +46,9 @@ while joysock_connect:
         recv_ready, dummy_1, dummy2 = select.select([joysock], [], [], 0)
         if recv_ready:
             recv_msg_data = joysock.recv(JOYSOCK_MAX_DATA)
+        else:
+            continue
     except:
-        joysock.close()
-        joysock_connect = False
         continue
 
     try:
@@ -44,7 +56,24 @@ while joysock_connect:
         print(decode_msg, round(rate_counter_time, 2), 'sec')
     except:
         print('unknown msg from joystick')
+        continue
 
+    if btn_L1 != decode_msg["L1"]:
+        if decode_msg["L1"]:
+            color = {"red":255, "blue":0, "green":255}
+        else:
+            color = {"red":255, "blue":0, "green":0}
+        btn_L1 = decode_msg["L1"]
+        send_joystick_msg = {"ps4_color": color}
+        send_msg = pickle.dumps(send_joystick_msg)
+        joysock.send(send_msg)
+        print('>', send_joystick_msg)
+
+    time.sleep(1 / MESSAGE_RATE)
+
+joysock.close()
+
+"""
     if rate_counter == 0:
         #print(decode_msg['L1'])
         if decode_msg['L1']:
@@ -55,7 +84,4 @@ while joysock_connect:
         send_msg = pickle.dumps(send_joystick_msg)
         joysock.send(send_msg)
         #print('>', send_joystick_msg)
-
-    time.sleep(1 / MESSAGE_RATE)
-
-joysock.close()
+"""
