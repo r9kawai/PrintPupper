@@ -1,6 +1,6 @@
 import numpy as np
-from ServoCalibration import MICROS_PER_RAD, NEUTRAL_ANGLE_DEGREES
-from HardwareConfig import PS4_COLOR, PS4_DEACTIVATED_COLOR
+from ServoCalibration import NEUTRAL_ANGLE_DEGREES
+from HardwareConfig import PS4_DEACTIVATED_COLOR, PS4_ACTIVATED_COLOR, PS4_TOROT_COLOR
 from enum import Enum
 
 # TODO: put these somewhere else
@@ -17,14 +17,16 @@ class PWMParams:
         self.pins = np.array([[ 23, 17, 16,  5], \
                               [ 24, 27, 20,  6], \
                               [ 25, 22, 21, 19]])
-        self.range = 4000
-        self.freq = 50
 
 
 class ServoParams:
     def __init__(self):
-        self.neutral_position_pwm = 1500  # Middle position
-        self.micros_per_rad = MICROS_PER_RAD  # Must be calibrated
+        self.pwm_freq = 100
+        self.pwm_usec_max = 2500
+        self.pwm_usec_min = 500
+        self.pwm_usec_neutral = 1500
+        self.pwm_usec_range = int(1000000 / self.pwm_freq)
+        self.pwm_usec_per_rad = (self.pwm_usec_max - self.pwm_usec_min) / np.pi
 
         # The neutral angle of the joint relative to the modeled zero-angle in degrees, for each joint
         self.neutral_angle_degrees = NEUTRAL_ANGLE_DEGREES
@@ -47,8 +49,9 @@ class ServoParams:
 class Configuration:
     def __init__(self):
         ################# CONTROLLER BASE COLOR ##############
-        self.ps4_color = PS4_COLOR    
-        self.ps4_deactivated_color = PS4_DEACTIVATED_COLOR    
+        self.ps4_activated_color = PS4_ACTIVATED_COLOR
+        self.ps4_deactivated_color = PS4_DEACTIVATED_COLOR
+        self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
         self.max_x_velocity = 0.4
@@ -84,7 +87,8 @@ class Configuration:
         )
 
         #################### GAIT #######################
-        self.dt = 0.01
+        self.dt = 0.02
+        self.dt_sleep = 0.005
         self.num_phases = 4
         self.contact_phases = np.array(
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
