@@ -1,4 +1,8 @@
+import time
+import select
 import struct
+import concurrent.futures
+import queue
 from collections import OrderedDict
 
 """
@@ -34,9 +38,23 @@ class USBJoystick():
         self.v["dpad_left"] = 0
         self.v["dpad_up"] = 0
         self.v["dpad_down"] = 0
-        return
+        self.joystick_reader_run = True
+        self.event_queue = queue.Queue()
+        self.executor = concurrent.futures.ThreadPoolExecutor()
+        self.reader_future = self.executor.submit(self.joystick_reader)
+
+    def joystick_reader(self):
+        while self.joystick_reader_run:
+            rlist, _, _ = select.select([self.fd], [], [])
+            if rlist:
+                event_data = self.fd.read(EVENT_SIZE)
+                self.event_queue.put(event_data)
+            else:
+                time.sleep(0.01)
 
     def close(self):
+        self.joystick_reader_run = False
+        self.executor.shutdown()
         self.fd.close()
         return
 
@@ -47,15 +65,8 @@ class USBJoystick():
     def get_input(self):
         js_event = False
         try:
-            readable, dummy_1, dummy2 = select.select([self.fd], [], [], 0)
-            if readable:
-                remain = fd.readable()
-                if remain >= EVENT_SIZE:
-                    js_event = self.fd.read(EVENT_SIZE)
-                    print(len(js_event))
-        except:
-            pass
-        if js_event == False:
+            js_event = self.event_queue.get(timeout=0)
+        except queue.Empty:
             return self.v
 
         try:
@@ -63,45 +74,83 @@ class USBJoystick():
         except:
             return self.v
 
+        """
         js_dbg = '{0:08x} '.format(js_time)
         js_dbg += '{: >6} '.format(js_value)
         js_dbg += '{0:02x} '.format(js_type)
         js_dbg += '{0:02x} : '.format(js_number)
-        print(js_dbg, end='')
+        print(js_dbg)
+        """
 
         if js_type & 0x7f == JS_EVENT_BUTTON:
-            print('Btn ', end='')
+            vkey = False
+            if js_number == 0:
+                vkey = 'button_square'
+            if js_number == 1:
+                vkey = 'button_triangle'
+            if js_number == 2:
+                vkey = 'button_cross'
+            if js_number == 3:
+                vkey = 'button_circle'
+            if js_number == 4:
+                vkey = 'button_l1'
+            if js_number == 5:
+                vkey = 'button_r1'
+            if vkey != False:
+                if js_value == 1:
+                    self.v[vkey] = True
+                else:
+                    self.v[vkey] = False
 
         if js_type & 0x7f == JS_EVENT_AXIS:
-            print('Axs ', end='')
+            if (js_number >= 0) and (js_number <= 3):
+                vkey = False
+                if js_number == 0:
+                    vkey = 'left_analog_x'
+                if js_number == 1:
+                    vkey = 'left_analog_y'
+                if js_number == 2:
+                    vkey = 'right_analog_x'
+                if js_number == 3:
+                    vkey = 'right_analog_y'
+                analog_value = round(float(js_value / 32767), 2)
+                if vkey:
+                    self.v[vkey] = analog_value
+
             if js_number == 4:
                 if js_value > 0:
-                    print('+KEY RIGHT', end='')
+                    self.v['dpad_right'] = 1
+                    self.v['dpad_left'] = 0
                 if js_value < 0:
-                    print('+KEY LEFT', end='')
+                    self.v['dpad_right'] = 0
+                    self.v['dpad_left'] = 1
                 if js_value == 0:
-                    print('+KEY -', end='')
+                    self.v['dpad_right'] = 0
+                    self.v['dpad_left'] = 0
+
             if js_number == 5:
                 if js_value > 0:
-                    print('+KEY DOWN', end='')
+                    self.v['dpad_up'] = 0
+                    self.v['dpad_down'] = 1
                 if js_value < 0:
-                    print('+KEY UP', end='')
+                    self.v['dpad_up'] = 1
+                    self.v['dpad_down'] = 0
                 if js_value == 0:
-                    print('+KEY -', end='')
-
-            if js_number == 0:
-                js_LX = float(js_value / 32767)
-                print('stick L x = {: >6.2g}'.format(js_LX), end='')
-            if js_number == 1:
-                js_LY = float(js_value / 32767)
-                print('stick L y = {: >6.2g}'.format(js_LY), end='')
-
-        print('')
+                    self.v['dpad_up'] = 0
+                    self.v['dpad_down'] = 0
 
         return self.v
 
     def led_color(self, red=0, green=0, blue=0):
         return
+
+if __name__ == '__main__':
+    joystick = USBJoystick('/dev/input/js0')
+    for i in range(100):
+        values = joystick.get_input()
+        time.sleep(0.1)
+    joystick.led_color(255, 0, 0)
+    joystick.close()
 
 """
 with open(infile_path, "rb") as file:
