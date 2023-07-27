@@ -51,7 +51,7 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
                 rate_counter_end = time.perf_counter()
                 rate_counter_time = rate_counter_end - rate_counter_start
                 rate_counter_start = rate_counter_end
-                print(round(rate_counter_time, 2), 'sec')
+                # print(round(rate_counter_time, 2), 'sec')
                 rate_counter = 0
             else:
                 rate_counter += 1
@@ -59,10 +59,10 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
             try:
                 values = joystick.joy.get_input()
             except:
-                print('joy > get err')
+                # print('joy > get err')
                 joystick.joy.close()
                 joydev_connect = False
-                print('joy > dev off')
+                # print('joy > dev off')
                 continue
 
             left_y = -values["left_analog_y"]
@@ -77,10 +77,10 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
             triangle = values["button_triangle"]
             dpadx = values["dpad_right"] - values["dpad_left"]
             dpady = values["dpad_up"] - values["dpad_down"]
-            left_x = round(left_x, 3);
-            left_y = round(left_y, 3);
-            right_x = round(right_x, 3);
-            right_y = round(right_y, 3);
+            left_x = round(left_x, 2);
+            left_y = round(left_y, 2);
+            right_x = round(right_x, 2);
+            right_y = round(right_y, 2);
             joymsg = {
                 "ly": left_y,
                 "lx": left_x,
@@ -118,7 +118,7 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
                                 color_msg = recv_msg["ps4_color"]
                                 r, b, g = tuple(color_msg.values())
                                 joystick.joy.led_color(r, g, b)
-                                print('> joyled RGB', r, g, b)
+                                # print('> joyled RGB', r, g, b)
                             except:
                                 print('< unknown joymsg from robot')
 
