@@ -9,16 +9,6 @@ from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
 from State import BehaviorState, State
 
-# PrintPupper
-import RPi.GPIO as GPIO
-GPIO_LED_G = 0
-GPIO_LED_B = 1
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(GPIO_LED_G, GPIO.OUT)
-GPIO.setup(GPIO_LED_B, GPIO.OUT)
-GPIO.output(GPIO_LED_G, False)
-GPIO.output(GPIO_LED_B, False)
-
 def main(use_imu=False):
     """Main program
     """
@@ -53,29 +43,28 @@ def main(use_imu=False):
     # Wait until the activate button has been pressed
     joystick_interface.set_color(config.ps4_deactivated_color)
     while True:
-        # PrintPupper
         wait_loop = 0
-        led_blink = False
+        led_blink = 0
 
         print("Waiting for L1 to activate robot.")
+        wait_loop_first = True
         while True:
-            # PrintPupper
-            if wait_loop % 5 == 0:
-                if led_blink:
-                    led_blink = False
-                else:
-                    led_blink = True
-                GPIO.output(GPIO_LED_G, led_blink)
-            wait_loop += 1
-
+            if (wait_loop % (2 if wait_loop_first else 6)) == 0:
+                hardware_interface.set_led_green(bool(led_blink % 2))
+                led_blink += 1
+            wait_loop +=1
             command = joystick_interface.get_command(state)
+            # PS4 gamepad from bluetooth mode as slow blink / USB gamepad as first blink
+            if command.joy_ps4_usb:
+                wait_loop_first = False
+            else:
+                wait_loop_first = True
             if command.activate_event == 1:
                 break
             time.sleep(0.1)
 
         print("Robot activated.")
-        # PrintPupper
-        GPIO.output(GPIO_LED_G, True)
+        hardware_interface.set_led_green(True)
         joystick_interface.set_color(config.ps4_activated_color)
         while True:
             now = time.time()
@@ -91,17 +80,17 @@ def main(use_imu=False):
                 hardware_interface.deactivate()
                 joystick_interface.set_color(config.ps4_deactivated_color)
                 state.behavior_state = BehaviorState.REST
-                GPIO.output(GPIO_LED_B, False)
+                hardware_interface.set_led_blue(False)
                 break
 
             if command.trot_event:
                 if state.behavior_state == BehaviorState.REST:
                     joystick_interface.set_color(config.ps4_torot_color)
-                    GPIO.output(GPIO_LED_B, True)
+                    hardware_interface.set_led_blue(True)
                     print("Robot start torot")
                 else:
                     joystick_interface.set_color(config.ps4_activated_color)
-                    GPIO.output(GPIO_LED_B, False)
+                    hardware_interface.set_led_blue(False)
                     print("Robot stop torot")
 
             # Read imu data. Orientation will be None if no data was available

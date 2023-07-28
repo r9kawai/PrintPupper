@@ -92,6 +92,8 @@ class JoystickInterface:
             roll_movement = - msg["dpadx"]
             command.roll = state.roll + message_dt * self.config.roll_speed * roll_movement
 
+            command.joy_ps4_usb = msg["ps4_usb"]
+
             return command
 
         except:
