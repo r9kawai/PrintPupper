@@ -76,7 +76,7 @@ class JoystickInterface:
             y_vel = msg["lx"] * -self.config.max_y_velocity
             command.horizontal_velocity = np.array([x_vel, y_vel])
             if self.rx_ry_switch:
-                command.yaw_rate = msg["ry"] * -self.config.max_yaw_rate
+                command.yaw_rate = (msg["ry"] * -1) * -self.config.max_yaw_rate
             else:
                 command.yaw_rate = msg["rx"] * -self.config.max_yaw_rate
 
@@ -86,7 +86,7 @@ class JoystickInterface:
             if self.rx_ry_switch:
                 pitch = msg["rx"] * self.config.max_pitch
             else:
-                pitch = msg["ry"] * self.config.max_pitch
+                pitch = (msg["ry"] * -1) * self.config.max_pitch
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )
