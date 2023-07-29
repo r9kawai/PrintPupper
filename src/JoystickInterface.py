@@ -16,6 +16,7 @@ class JoystickInterface:
         self.previous_state = BehaviorState.REST
         self.previous_hop_toggle = 0
         self.previous_activate_toggle = 0
+        self.rx_ry_switch = False
 
         self.JOYSOCK_HOST = 'localhost'
         self.JOYSOCK_PORT = 51000
@@ -48,6 +49,11 @@ class JoystickInterface:
             if do_print:
                print(msg)
 
+            if msg["long_triangle"]:
+                msg["long_triangle"] = False
+                self.rx_ry_switch = not self.rx_ry_switch
+                print('RX/RY reverse')
+
             ####### Handle discrete commands ########
             # Check if requesting a state transition to trotting, or from trotting to resting
             gait_toggle = msg["R1"]
@@ -69,12 +75,18 @@ class JoystickInterface:
             x_vel = msg["ly"] * self.config.max_x_velocity
             y_vel = msg["lx"] * -self.config.max_y_velocity
             command.horizontal_velocity = np.array([x_vel, y_vel])
-            command.yaw_rate = msg["rx"] * -self.config.max_yaw_rate
+            if self.rx_ry_switch:
+                command.yaw_rate = msg["ry"] * -self.config.max_yaw_rate
+            else:
+                command.yaw_rate = msg["rx"] * -self.config.max_yaw_rate
 
             message_rate = msg["message_rate"]
             message_dt = 1.0 / message_rate
 
-            pitch = msg["ry"] * self.config.max_pitch
+            if self.rx_ry_switch:
+                pitch = msg["rx"] * self.config.max_pitch
+            else:
+                pitch = msg["ry"] * self.config.max_pitch
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )

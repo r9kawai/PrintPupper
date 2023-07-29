@@ -12,6 +12,8 @@ class HardwareInterface:
         GPIO.setup(LED_BLUE_GPIO, GPIO.OUT)
         GPIO.output(LED_GREEN_GPIO, False)
         GPIO.output(LED_BLUE_GPIO, False)
+        print('GPIO LED GREEN [ ', LED_GREEN_GPIO, 'pin ]', sep='')
+        print('GPIO LED BLUE  [ ', LED_BLUE_GPIO, 'pin ]', sep='')
 
         self.pi = pigpio.pi()
         self.pwm_params = PWMParams()
