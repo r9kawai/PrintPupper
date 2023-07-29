@@ -52,18 +52,36 @@ while joysock_connect:
         continue
 
     try:
-        decode_msg = pickle.loads(recv_msg_data)
-        print(decode_msg, round(rate_counter_time, 2), 'sec')
+        jmsg = pickle.loads(recv_msg_data)
+        # print(jmsg, round(rate_counter_time, 2), 'sec')
+        print("PS4/USB:", int(jmsg["ps4_usb"]), " ", sep='', end='')
+        print("rate:{:03d}".format(jmsg["message_rate"]), "    ", sep='', end='')
+        print("L-X:{:5.2f}".format(jmsg["lx"]), " ", sep='', end='')
+        print("L-Y:{:5.2f}".format(jmsg["ly"]), "    ", sep='', end='')
+        print("R-X:{:5.2f}".format(jmsg["rx"]), " ", sep='', end='')
+        print("R-Y:{:5.2f}".format(jmsg["ry"]), "    ", sep='', end='')
+        print("R1:", int(jmsg["R1"]), "    ", sep='', end='')
+        print("L1:", int(jmsg["L1"]), "    ", sep='', end='')
+        print("PAD-X:{:02d}".format(jmsg["dpadx"]), " ", sep='', end='')
+        print("PAD-Y:{:02d}".format(jmsg["dpady"]), "    ", sep='', end='')
+        print("〇:", int(jmsg["circle"]), " ", sep='', end='')
+        print("〇++:", int(jmsg["long_circle"]), "    ", sep='', end='')
+        print("×:", int(jmsg["x"]), " ", sep='', end='')
+        print("×++:", int(jmsg["long_x"]), "    ", sep='', end='')
+        print("△:", int(jmsg["triangle"]), " ", sep='', end='')
+        print("△++:", int(jmsg["long_triangle"]), "    ", sep='', end='')
+        print("□:", int(jmsg["square"]), " ", sep='', end='')
+        print("□++:", int(jmsg["long_square"]))
     except:
         print('unknown msg from joystick')
         continue
 
-    if btn_L1 != decode_msg["L1"]:
-        if decode_msg["L1"]:
+    if btn_L1 != jmsg["L1"]:
+        if jmsg["L1"]:
             color = {"red":255, "blue":0, "green":255}
         else:
             color = {"red":255, "blue":0, "green":0}
-        btn_L1 = decode_msg["L1"]
+        btn_L1 = jmsg["L1"]
         send_joystick_msg = {"ps4_color": color}
         send_msg = pickle.dumps(send_joystick_msg)
         joysock.send(send_msg)
@@ -73,15 +91,3 @@ while joysock_connect:
 
 joysock.close()
 
-"""
-    if rate_counter == 0:
-        #print(decode_msg['L1'])
-        if decode_msg['L1']:
-            color = {"red":255, "blue":0, "green":0}
-        else:
-            color = {"red":0, "blue":255, "green":0}
-        send_joystick_msg = {"ps4_color": color}
-        send_msg = pickle.dumps(send_joystick_msg)
-        joysock.send(send_msg)
-        #print('>', send_joystick_msg)
-"""

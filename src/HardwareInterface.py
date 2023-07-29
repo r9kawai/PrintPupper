@@ -1,21 +1,37 @@
 import pigpio
+import RPi.GPIO as GPIO
 from Config import ServoParams, PWMParams
+
+LED_GREEN_GPIO = 0
+LED_BLUE_GPIO = 1
 
 class HardwareInterface:
     def __init__(self):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(LED_GREEN_GPIO, GPIO.OUT)
+        GPIO.setup(LED_BLUE_GPIO, GPIO.OUT)
+        GPIO.output(LED_GREEN_GPIO, False)
+        GPIO.output(LED_BLUE_GPIO, False)
+        print('GPIO LED GREEN [ ', LED_GREEN_GPIO, 'pin ]', sep='')
+        print('GPIO LED BLUE  [ ', LED_BLUE_GPIO, 'pin ]', sep='')
+
         self.pi = pigpio.pi()
         self.pwm_params = PWMParams()
         self.servo_params = ServoParams()
         self.initialize_pwm()
+        return
 
     def set_actuator_postions(self, joint_angles):
         self.send_servo_commands(joint_angles)
-    
+        return
+
     def set_actuator_position(self, joint_angle, axis, leg):
         self.send_servo_command(joint_angle, axis, leg)
+        return
 
     def deactivate(self):
         self.deactivate_servos()
+        return
 
     def initialize_pwm(self):
         print('GPIO ', self.servo_params.pwm_freq, 'Hz ', self.servo_params.pwm_usec_range, 'range ', self.servo_params.pwm_usec_neutral, 'neutral',  sep='')
@@ -35,11 +51,13 @@ class HardwareInterface:
                 self.pi.set_PWM_range(self.pwm_params.pins[axis_index, leg_index], self.servo_params.pwm_usec_range)
                 print('{:02d}'.format(self.pwm_params.pins[axis_index, leg_index]), 'pin ', sep='', end='')
             print(']')
+        return
 
     def deactivate_servos(self):
         for leg_index in range(4):
             for axis_index in range(3):
                 self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], 0)
+        return
 
     def angle_to_pwmdutycycle(self, angle, axis_index, leg_index):
         neutral = self.servo_params.neutral_angles[axis_index, leg_index]
@@ -65,6 +83,7 @@ class HardwareInterface:
 #       duty_cycle = self.angle_to_duty_cycle(joint_angle, axis, leg)
         duty_cycle = self.angle_to_pwmdutycycle(joint_angle, axis, leg)
         self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
+        return
 
     def send_servo_commands(self, joint_angles):
         for leg_index in range(4):
@@ -73,6 +92,7 @@ class HardwareInterface:
 #               duty_cycle = self.angle_to_duty_cycle(angle, axis_index, leg_index)
                 duty_cycle = self.angle_to_pwmdutycycle(angle, axis_index, leg_index)
                 self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], duty_cycle)
+        return
 
     def send_servo_commands_dbg(self, joint_angles):
         for leg_index in range(4):
@@ -92,7 +112,15 @@ class HardwareInterface:
                 print('{:04d}'.format(duty_cycle), end=' ')
             print('] ', end='')
         print('')
+        return
 
+    def set_led_green(self, onoff):
+        GPIO.output(LED_GREEN_GPIO, onoff)
+        return
+
+    def set_led_blue(self, onoff):
+        GPIO.output(LED_BLUE_GPIO, onoff)
+        return
 
     """Converts a pwm signal (measured in microseconds) to a corresponding duty cycle on the gpio pwm pin
 def pwm_to_duty_cycle(pulsewidth_micros, pwm_params):
