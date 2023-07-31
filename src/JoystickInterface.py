@@ -17,6 +17,7 @@ class JoystickInterface:
         self.previous_hop_toggle = 0
         self.previous_activate_toggle = 0
         self.rx_ry_switch = False
+        self.last_msg = self.get_null_joymsg()
 
         self.JOYSOCK_HOST = 'localhost'
         self.JOYSOCK_PORT = 51000
@@ -30,7 +31,7 @@ class JoystickInterface:
                 self.joysock = socket(AF_INET, SOCK_STREAM)
                 self.joysock.connect((self.JOYSOCK_HOST, self.JOYSOCK_PORT))
                 self.joysock_connect = True
-                self.last_msg = get_null_joymsg()
+                self.last_msg = self.get_null_joymsg()
                 print('robo > joystick connect.')
             except:
                 print('robo > joystick socket listen...')
@@ -136,6 +137,14 @@ class JoystickInterface:
                 "square": False,
                 "circle": False,
                 "triangle": False,
-                "message_rate": 20,
+                "long_square": False,
+                "long_x": False,
+                "long_circle": False,
+                "long_triangle": False,
+                "message_rate": 25,
+                "ps4_usb" : False,
             }
         return(null_joymsg)
+
+    def get_last_msg(self):
+        return self.last_msg

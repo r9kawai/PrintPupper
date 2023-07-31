@@ -61,8 +61,8 @@ def main(use_imu=False):
                 wait_loop_first = True
             if command.activate_event == 1:
                 break
-            if command.caliblate_mode_event == 1:
-                run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
+            # if command.caliblate_mode_event == 1:
+            #   run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
             time.sleep(0.1)
 
         print("Robot activated.")
