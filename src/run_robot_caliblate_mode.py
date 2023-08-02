@@ -39,19 +39,25 @@ class run_robot_caliblate_mode():
         self.btn_next_servo = False
         self.btn_exit = False
 
-        self.hardwareif.servo_params.neutral_angle_degrees = np.zeros((3, 4))
+        self.hardwareif.servo_params.neutral_angle_degrees = np.array([[0, 0, 0, 0], [45, 45, 45, 45], [-45, -45, -45, -45]])
+        print('Before Calibrattion')
+        print(self.hardwareif.servo_params.neutral_angle_degrees)
+
         mode_exit = False
         while True:
             for leg in range(4):
                 for axis in range(3):
                     motor_name = self.get_motor_name(axis, leg)
                     set_point = self.get_motor_setpoint(axis, leg)
-                    self.hardwareif.servo_params.neutral_angle_degrees[axis, leg] = 0
-                    self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point), axis, leg)
-                    offset = 0
-                    print(motor_name, leg, axis, offset)
-                    offset, mode_exit = self.step_until(axis, leg, set_point)
-                    print(motor_name, leg, axis, offset)
+                    if axis == 1:
+                        offset = set_point - self.hardwareif.servo_params.neutral_angle_degrees[axis, leg]
+                    else:
+                        offset = -(set_point + self.hardwareif.servo_params.neutral_angle_degrees[axis, leg])
+
+                    print(motor_name, leg,  axis, ' now =', offset)
+                    offset, mode_exit = self.step_until(axis, leg, set_point, offset)
+                    print(motor_name, leg,  axis, ' set =', offset, '\n')
+
                     if axis == 1:
                         self.hardwareif.servo_params.neutral_angle_degrees[axis, leg] = set_point - offset
                     else:
@@ -64,6 +70,8 @@ class run_robot_caliblate_mode():
             if mode_exit:
                 break
 
+        print('After Calibrattion')
+        print(self.hardwareif.servo_params.neutral_angle_degrees)
 
         self.subloop_exit = True
         self.subloop_thread.join(timeout=1)
@@ -108,9 +116,15 @@ class run_robot_caliblate_mode():
         data = np.array([[0, 0, 0, 0], [45, 45, 45, 45], [45, 45, 45, 45]])
         return data[i, j]
 
-    def step_until(self, axis, leg, set_point):
-        offset = 0
+    def step_until(self, axis, leg, set_point, offset):
         mode_exit = False
+
+        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset + 5), axis, leg)
+        time.sleep(0.25)
+        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset - 5), axis, leg)
+        time.sleep(0.25)
+        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset), axis, leg)
+
         btn = 0
         while True:
             try:
@@ -119,7 +133,7 @@ class run_robot_caliblate_mode():
                 continue
 
             if btn == BTN_TEST:
-                print('BTN_TEST')
+                # print('BTN_TEST')
                 self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset + 5), axis, leg)
                 time.sleep(0.25)
                 self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset - 5), axis, leg)
@@ -127,18 +141,18 @@ class run_robot_caliblate_mode():
 
             if btn == BTN_MOVE_PLUS:
                 offset += 1.0
-                print(offset, '++', sep='')
+                # print(offset, '++', sep='')
 
             if btn == BTN_MOVE_MINUS:
                 offset -= 1.0
-                print(offset, '--', sep='')
+                # print(offset, '--', sep='')
 
             if btn == BTN_NEXT:
-                print('BTN_NEXT')
+                # print('BTN_NEXT')
                 break
 
             if btn == BTN_EXIT:
-                print('BTN_EXIT')
+                # print('BTN_EXIT')
                 mode_exit = True
                 break
 
