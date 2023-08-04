@@ -61,11 +61,16 @@ class JoystickInterface:
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
 
             # Check if requesting a state transition to hopping, from trotting or resting
-            hop_toggle = msg["x"]
-            command.hop_event = (hop_toggle == 1 and self.previous_hop_toggle == 0)            
+            # hop_toggle = msg["x"]
+            # command.hop_event = (hop_toggle == 1 and self.previous_hop_toggle == 0) 
+            hop_toggle = 0
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
+
+            if msg["long_x"]:
+                command.caliblate_mode_event = True
+                print('go Calibrate mode')
 
             # Update previous values for toggles and state
             self.previous_gait_toggle = gait_toggle
