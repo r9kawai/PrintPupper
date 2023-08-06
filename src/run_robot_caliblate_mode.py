@@ -16,7 +16,6 @@ NEUTRAL_ANGLE_DEGREES = np.array(
 )
 """
 
-MESSAGE_RATE = 25
 BTN_MOVE_PLUS = 1
 BTN_MOVE_MINUS = 2
 BTN_TEST = 3
@@ -30,7 +29,6 @@ class run_robot_caliblate_mode():
         self.joystickif = joystick_interface
         self.state = State()
 
-        time.sleep(1.2)
         self.mode_btn_que = queue.Queue()
         self.subloop_exit = False
         self.subloop_thread = threading.Thread(target=self.subloop)
@@ -42,9 +40,17 @@ class run_robot_caliblate_mode():
         self.btn_next_servo = False
         self.btn_exit = False
 
-        self.hardwareif.servo_params.neutral_angle_degrees = np.array([[0, 0, 0, 0], [45, 45, 45, 45], [-45, -45, -45, -45]])
+        self.hardwareif.servo_params.neutral_angle_degrees = np.array([[0.0, 0.0, 0.0, 0.0], [45.0, 45.0, 45.0, 45.0], [-45.0, -45.0, -45.0, -45.0]])
         print('Before Calibrattion')
         print(self.hardwareif.servo_params.neutral_angle_degrees)
+
+        while True:
+            try:
+                btn = self.mode_btn_que.get(timeout=0.1)
+                if btn == BTN_NEXT:
+                    break
+            except queue.Empty:
+                continue
 
         mode_exit = False
         while True:
@@ -85,6 +91,11 @@ class run_robot_caliblate_mode():
     def subloop(self):
         self.joystickif.get_command(self.state)
         pre_msg = self.joystickif.get_last_msg()
+        tick = 0
+        tack = True
+        self.hardwareif.set_led_green(0)
+        self.hardwareif.set_led_blue(0)
+
         while not self.subloop_exit:
             command = self.joystickif.get_command(self.state)
             msg = self.joystickif.get_last_msg()
@@ -105,8 +116,21 @@ class run_robot_caliblate_mode():
                 command.caliblate_mode_event = False
                 self.mode_btn_que.put(BTN_EXIT)
 
+            if (tick % 100) == 0:
+                if tack:
+                    self.hardwareif.set_led_green(1)
+                    self.hardwareif.set_led_blue(0)
+                else:
+                    self.hardwareif.set_led_green(0)
+                    self.hardwareif.set_led_blue(1)
+                tack = not tack
+
+            tick += 1
             pre_msg = msg
-            time.sleep(1 / MESSAGE_RATE)
+            time.sleep(self.configif.dt_sleep)
+
+        self.hardwareif.set_led_green(0)
+        self.hardwareif.set_led_blue(0)
         return
 
 
@@ -138,7 +162,7 @@ class run_robot_caliblate_mode():
         btn = 0
         while True:
             try:
-                btn = self.mode_btn_que.get(timeout=0.2)
+                btn = self.mode_btn_que.get(timeout=0.1)
             except queue.Empty:
                 continue
 
@@ -150,11 +174,11 @@ class run_robot_caliblate_mode():
                 time.sleep(0.25)
 
             if btn == BTN_MOVE_PLUS:
-                offset += 1.0
+                offset += 0.5
                 # print(offset, '++', sep='')
 
             if btn == BTN_MOVE_MINUS:
-                offset -= 1.0
+                offset -= 0.5
                 # print(offset, '--', sep='')
 
             if btn == BTN_NEXT:

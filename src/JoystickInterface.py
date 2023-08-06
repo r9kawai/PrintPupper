@@ -69,6 +69,7 @@ class JoystickInterface:
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
 
             if msg["long_x"]:
+                msg["long_x"] = False
                 command.caliblate_mode_event = True
                 print('go Calibrate mode')
 

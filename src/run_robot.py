@@ -48,9 +48,10 @@ def main(use_imu=False):
         led_blink = 0
 
         print("Waiting for L1 to activate robot.")
+        print(hardware_interface.servo_params.neutral_angle_degrees)
         wait_loop_first = True
         while True:
-            if (wait_loop % (2 if wait_loop_first else 6)) == 0:
+            if (wait_loop % (50 if wait_loop_first else 100)) == 0:
                 hardware_interface.set_led_green(bool(led_blink % 2))
                 led_blink += 1
             wait_loop +=1
@@ -65,7 +66,7 @@ def main(use_imu=False):
             if command.caliblate_mode_event:
                 command.caliblate_mode_event = False
                 run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
-            time.sleep(0.1)
+            time.sleep(config.dt_sleep)
 
         print("Robot activated.")
         hardware_interface.set_led_green(True)
