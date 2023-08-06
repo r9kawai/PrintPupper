@@ -50,8 +50,8 @@ class JoystickInterface:
             if do_print:
                print(msg)
 
-            if msg["long_triangle"]:
-                msg["long_triangle"] = False
+            if msg["long_square"]:
+                msg["long_square"] = False
                 self.rx_ry_switch = not self.rx_ry_switch
                 print('RX/RY reverse')
 
@@ -148,7 +148,7 @@ class JoystickInterface:
                 "long_circle": False,
                 "long_triangle": False,
                 "message_rate": 25,
-                "ps4_usb" : False,
+                "ps4_usb" : True,
             }
         return(null_joymsg)
 
