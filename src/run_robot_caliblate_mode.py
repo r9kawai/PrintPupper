@@ -40,9 +40,14 @@ class run_robot_caliblate_mode():
         self.btn_next_servo = False
         self.btn_exit = False
 
-        self.hardwareif.servo_params.neutral_angle_degrees = np.array([[0.0, 0.0, 0.0, 0.0], [45.0, 45.0, 45.0, 45.0], [-45.0, -45.0, -45.0, -45.0]])
+        self.hardwareif.servo_params.neutral_angle_degrees = np.array(
+            [[  0.,  0.,  0.,  0.],
+            [ 45., 45., 45., 45.],
+            [-45.,-45.,-45.,-45.]])
+        self.neutraldegs = self.hardwareif.servo_params.neutral_angle_degrees
+        self.offsets = np.zeros((3, 4), dtype=float)
         print('Before Calibrattion')
-        print(self.hardwareif.servo_params.neutral_angle_degrees)
+        print(self.neutraldegs)
 
         while True:
             try:
@@ -57,21 +62,18 @@ class run_robot_caliblate_mode():
             for leg in range(4):
                 for axis in range(3):
                     motor_name = self.get_motor_name(axis, leg)
-                    set_point = self.get_motor_setpoint(axis, leg)
-                    if axis == 1:
-                        offset = set_point - self.hardwareif.servo_params.neutral_angle_degrees[axis, leg]
-                    else:
-                        offset = -(set_point + self.hardwareif.servo_params.neutral_angle_degrees[axis, leg])
-
-                    print(motor_name, leg,  axis, ' now =', offset)
-                    offset, mode_exit = self.step_until(axis, leg, set_point, offset)
-                    print(motor_name, leg,  axis, ' set =', offset, '\n')
+                    set_point = [0, 45, 45][axis]
+                    self.neutraldegs[axis, leg] = 0
+                    offset = self.offsets[axis, leg]
+                    offset, mode_exit = self.step_until(motor_name, axis, leg, set_point, offset)
+                    self.offsets[axis, leg] = offset
 
                     if axis == 1:
-                        self.hardwareif.servo_params.neutral_angle_degrees[axis, leg] = set_point - offset
+                        self.neutraldegs[axis, leg] = set_point - offset
                     else:
-                        self.hardwareif.servo_params.neutral_angle_degrees[axis, leg] = -(set_point + offset)
-                    hardware_interface.set_actuator_position(self.degrees_to_radians([0, 45, -45][axis]), axis, leg)
+                        self.neutraldegs[axis, leg] = -(set_point + offset)
+                    self.set_actuator([0, 45, -45][axis], axis, leg)
+
                     if mode_exit:
                         break
                 if mode_exit:
@@ -80,7 +82,7 @@ class run_robot_caliblate_mode():
                 break
 
         print('After Calibrattion')
-        print(self.hardwareif.servo_params.neutral_angle_degrees)
+        print(self.neutraldegs)
         self.overwrite_ServoCalibration_file()
 
         self.subloop_exit = True
@@ -134,8 +136,10 @@ class run_robot_caliblate_mode():
         return
 
 
-    def degrees_to_radians(self, input_array):
-        return input_array * np.pi / 180.0
+    def set_actuator(self, deg, axis, leg):
+        rad = deg * np.pi / 180.0
+        self.hardwareif.set_actuator_position(rad, axis, leg)
+        return
 
 
     def get_motor_name(self, i, j):
@@ -145,19 +149,15 @@ class run_robot_caliblate_mode():
         return final_name
 
 
-    def get_motor_setpoint(self, i, j):
-        data = np.array([[0, 0, 0, 0], [45, 45, 45, 45], [45, 45, 45, 45]])
-        return data[i, j]
-
-
-    def step_until(self, axis, leg, set_point, offset):
+    def step_until(self, motor_name, axis, leg, set_point, offset):
+        print(motor_name, 'now', offset)
         mode_exit = False
 
-        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset + 5), axis, leg)
+        self.set_actuator(set_point + offset + 5, axis, leg)
         time.sleep(0.25)
-        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset - 5), axis, leg)
+        self.set_actuator(set_point + offset - 5, axis, leg)
         time.sleep(0.25)
-        self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset), axis, leg)
+        self.set_actuator(set_point + offset, axis, leg)
 
         btn = 0
         while True:
@@ -168,9 +168,9 @@ class run_robot_caliblate_mode():
 
             if btn == BTN_TEST:
                 # print('BTN_TEST')
-                self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset + 5), axis, leg)
+                self.set_actuator(set_point + offset + 5, axis, leg)
                 time.sleep(0.25)
-                self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset - 5), axis, leg)
+                self.set_actuator(set_point + offset - 5, axis, leg)
                 time.sleep(0.25)
 
             if btn == BTN_MOVE_PLUS:
@@ -190,9 +190,10 @@ class run_robot_caliblate_mode():
                 mode_exit = True
                 break
 
-            self.hardwareif.set_actuator_position(self.degrees_to_radians(set_point + offset), axis, leg)
+            self.set_actuator(set_point + offset, axis, leg)
             btn = 0
 
+        print(motor_name, 'set', offset, '\n')
         return offset, mode_exit
 
 
@@ -200,7 +201,7 @@ class run_robot_caliblate_mode():
         preamble1 = "# WARNING : This file is machine generated by run_robot_caliblate_mode.py."
         preamble2 = "# Edit at your own risk."
         preamble3 = "import numpy as np"
-        formatted_str = [[x for x in row] for row in self.hardwareif.servo_params.neutral_angle_degrees]
+        formatted_str = [[x for x in row] for row in self.neutraldegs]
 
         # Overwrite ServoCalibration.py file with modified values
         with open("ServoCalibration.py", "w") as f:
