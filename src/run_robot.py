@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import time
 from IMU import IMU
@@ -8,6 +9,7 @@ from HardwareInterface import HardwareInterface
 from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
 from State import BehaviorState, State
+from run_robot_caliblate_mode import run_robot_caliblate_mode
 
 def main(use_imu=False):
     """Main program
@@ -47,9 +49,10 @@ def main(use_imu=False):
         led_blink = 0
 
         print("Waiting for L1 to activate robot.")
-        wait_loop_first = True
+        print(hardware_interface.servo_params.neutral_angle_degrees)
+        wait_loop_first = False
         while True:
-            if (wait_loop % (2 if wait_loop_first else 6)) == 0:
+            if (wait_loop % (25 if wait_loop_first else 100)) == 0:
                 hardware_interface.set_led_green(bool(led_blink % 2))
                 led_blink += 1
             wait_loop +=1
@@ -61,7 +64,11 @@ def main(use_imu=False):
                 wait_loop_first = True
             if command.activate_event == 1:
                 break
-            time.sleep(0.1)
+            if command.caliblate_mode_event:
+                command.caliblate_mode_event = False
+                run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
+                sys.exit()
+            time.sleep(config.dt_sleep)
 
         print("Robot activated.")
         hardware_interface.set_led_green(True)
@@ -77,7 +84,7 @@ def main(use_imu=False):
             command = joystick_interface.get_command(state)
             if command.activate_event == 1:
                 print("Deactivating Robot")
-                hardware_interface.deactivate()
+                # hardware_interface.deactivate()
                 joystick_interface.set_color(config.ps4_deactivated_color)
                 state.behavior_state = BehaviorState.REST
                 hardware_interface.set_led_blue(False)

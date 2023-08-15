@@ -17,6 +17,7 @@ class JoystickInterface:
         self.previous_hop_toggle = 0
         self.previous_activate_toggle = 0
         self.rx_ry_switch = False
+        self.last_msg = self.get_null_joymsg()
 
         self.JOYSOCK_HOST = 'localhost'
         self.JOYSOCK_PORT = 51000
@@ -30,7 +31,7 @@ class JoystickInterface:
                 self.joysock = socket(AF_INET, SOCK_STREAM)
                 self.joysock.connect((self.JOYSOCK_HOST, self.JOYSOCK_PORT))
                 self.joysock_connect = True
-                self.last_msg = get_null_joymsg()
+                self.last_msg = self.get_null_joymsg()
                 print('robo > joystick connect.')
             except:
                 print('robo > joystick socket listen...')
@@ -49,8 +50,8 @@ class JoystickInterface:
             if do_print:
                print(msg)
 
-            if msg["long_triangle"]:
-                msg["long_triangle"] = False
+            if msg["long_square"]:
+                msg["long_square"] = False
                 self.rx_ry_switch = not self.rx_ry_switch
                 print('RX/RY reverse')
 
@@ -60,11 +61,17 @@ class JoystickInterface:
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
 
             # Check if requesting a state transition to hopping, from trotting or resting
-            hop_toggle = msg["x"]
-            command.hop_event = (hop_toggle == 1 and self.previous_hop_toggle == 0)            
+            # hop_toggle = msg["x"]
+            # command.hop_event = (hop_toggle == 1 and self.previous_hop_toggle == 0) 
+            hop_toggle = 0
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
+
+            if msg["long_x"]:
+                msg["long_x"] = False
+                command.caliblate_mode_event = True
+                print('go Calibrate mode')
 
             # Update previous values for toggles and state
             self.previous_gait_toggle = gait_toggle
@@ -136,6 +143,14 @@ class JoystickInterface:
                 "square": False,
                 "circle": False,
                 "triangle": False,
-                "message_rate": 20,
+                "long_square": False,
+                "long_x": False,
+                "long_circle": False,
+                "long_triangle": False,
+                "message_rate": 25,
+                "ps4_usb" : True,
             }
         return(null_joymsg)
+
+    def get_last_msg(self):
+        return self.last_msg
