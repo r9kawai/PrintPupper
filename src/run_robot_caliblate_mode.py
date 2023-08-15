@@ -204,7 +204,7 @@ class run_robot_caliblate_mode():
         formatted_str = [[x for x in row] for row in self.neutraldegs]
 
         # Overwrite ServoCalibration.py file with modified values
-        with open("ServoCalibration.py", "w") as f:
+        with open("/home/pi/PrintPupper/src/ServoCalibration.py", "w") as f:
             print(preamble1, file = f)
             print(preamble2, file = f)
             print(preamble3, file = f)

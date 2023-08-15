@@ -5,9 +5,11 @@ After = joystick.service multi-user.target
 [Service]
 ExecStartPre = sleep 1
 ExecStartPre = sudo pigpiod
-ExecStart = sudo /usr/bin/python3 /home/pi/PrintPupper/src/run_robot.py
+ExecStart = /usr/bin/python3 /home/pi/PrintPupper/src/run_robot.py
+RestartSec = 2
 KillSignal = 2
-TimeoutStopSec = 10
+TimeoutStopSec = 5
+Restart = always
 
 [Install]
 WantedBy=multi-user.target

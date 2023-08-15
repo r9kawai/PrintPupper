@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import time
 from IMU import IMU
@@ -66,6 +67,7 @@ def main(use_imu=False):
             if command.caliblate_mode_event:
                 command.caliblate_mode_event = False
                 run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
+                sys.exit()
             time.sleep(config.dt_sleep)
 
         print("Robot activated.")
