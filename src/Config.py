@@ -55,30 +55,30 @@ class Configuration:
 
         #################### COMMANDS ####################
         self.max_x_velocity = 0.4
-        self.max_y_velocity = 0.3
-        self.max_yaw_rate = 2.0
-        self.max_pitch = 30.0 * np.pi / 180.0
-        
+        self.max_y_velocity = 0.2                           # ok amend
+        self.max_yaw_rate = 1.25                            # ok amend
+        self.max_pitch = 25.0 * np.pi / 180.0               # ok amend
+
         #################### MOVEMENT PARAMS ####################
         self.z_time_constant = 0.02
         self.z_speed = 0.03  # maximum speed [m/s]
-        self.pitch_deadband = 0.02
+        self.pitch_deadband = 0.06                          # ok amend
         self.pitch_time_constant = 0.25
-        self.max_pitch_rate = 0.15
+        self.max_pitch_rate = 0.3                           # ok amend
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
-        self.yaw_time_constant = 0.3
-        self.max_stance_yaw = 1.2
-        self.max_stance_yaw_rate = 2.0
+        self.yaw_time_constant = 0.6                        # ok amend
+        self.max_stance_yaw = 0.6                           # ok amend
+        self.max_stance_yaw_rate = 1.0                      # ok amend
 
         #################### STANCE ####################
         self.delta_x = 0.1
         self.delta_y = 0.09
         self.x_shift = 0.0
-        self.default_z_ref = -0.16
+        self.default_z_ref = 0                              # ok amend
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.07
+        self.z_clearance = 0.08                             # ok amend
         self.alpha = (
             0.5  # Ratio between touchdown distance and total horizontal stance movement
         )
@@ -94,28 +94,28 @@ class Configuration:
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.10  # duration of the phase where all four feet are on the ground
+            0.11  # duration of the phase where all four feet are on the ground     # ok amend
         )
         self.swing_time = (
-            0.15  # duration of the phase when only two feet are on the ground
+            0.165 # duration of the phase when only two feet are on the ground      # ok amend
         )
 
         ######################## GEOMETRY ######################
-        self.LEG_FB = 0.10  # front-back distance from center line to leg axis
-        self.LEG_LR = 0.04  # left-right distance from center line to leg plane
-        self.LEG_L2 = 0.115
-        self.LEG_L1 = 0.1235
-        self.ABDUCTION_OFFSET = 0.03  # distance from abduction axis to leg
-        self.FOOT_RADIUS = 0.01
+        self.LEG_FB = 0.10  # front-back distance from center line to leg axis  # ok as is
+        self.LEG_LR = 0.04  # left-right distance from center line to leg plane # ok as is
+        self.LEG_L2 = 0.0995                                                    # ok amend
+        self.LEG_L1 = 0.1235                                                    # ok as is
+        self.ABDUCTION_OFFSET = 0.020 # distance from abduction axis to leg     # ok amend
+        self.FOOT_RADIUS = 0.0125                                               # ok amend
 
-        self.HIP_L = 0.0394
-        self.HIP_W = 0.0744
-        self.HIP_T = 0.0214
-        self.HIP_OFFSET = 0.0132
+        self.HIP_L = 0.0394                                                     # ok as is
+        self.HIP_W = 0.0744                                                     # ok as is
+        self.HIP_T = 0.0214                                                     # ?? as is
+        self.HIP_OFFSET = 0.0132                                                # ?? as is
 
-        self.L = 0.276
-        self.W = 0.100
-        self.T = 0.050
+        self.L = 0.276                                                          # ?? as is
+        self.W = 0.100                                                          # ?? as is
+        self.T = 0.050                                                          # ?? as is
 
         self.LEG_ORIGINS = np.array(
             [
