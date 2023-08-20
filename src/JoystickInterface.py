@@ -91,9 +91,9 @@ class JoystickInterface:
             message_dt = 1.0 / message_rate
 
             if self.rx_ry_switch:
-                pitch = msg["rx"] * self.config.max_pitch
+                pitch =  (msg["rx"] + self.config.pitch_gain) * self.config.max_pitch
             else:
-                pitch = (msg["ry"] * -1) * self.config.max_pitch
+                pitch = ((msg["ry"] + self.config.pitch_gain) * -1) * self.config.max_pitch
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )
