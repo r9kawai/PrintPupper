@@ -54,7 +54,7 @@ class Configuration:
         self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.4
+        self.max_x_velocity = 0.3                           # ok amend
         self.max_y_velocity = 0.2                           # ok amend
         self.max_yaw_rate = 1.25                            # ok amend
         self.max_pitch = 25.0 * np.pi / 180.0               # ok amend
@@ -63,6 +63,7 @@ class Configuration:
         self.z_time_constant = 0.02
         self.z_speed = 0.03  # maximum speed [m/s]
         self.pitch_deadband = 0.06                          # ok amend
+        self.pitch_gain = 0.2                               # ok add
         self.pitch_time_constant = 0.25
         self.max_pitch_rate = 0.3                           # ok amend
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
@@ -74,11 +75,11 @@ class Configuration:
         self.delta_x = 0.1
         self.delta_y = 0.09
         self.x_shift = 0.0
-        self.default_z_ref = 0                              # ok amend
+        self.default_z_ref = -0.15                          # ok amend needs State.py and Command.py same value
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.08                             # ok amend
+        self.z_clearance = 0.075                            # ok amend
         self.alpha = (
             0.5  # Ratio between touchdown distance and total horizontal stance movement
         )
@@ -105,7 +106,7 @@ class Configuration:
         self.LEG_LR = 0.04  # left-right distance from center line to leg plane # ok as is
         self.LEG_L2 = 0.0995                                                    # ok amend
         self.LEG_L1 = 0.1235                                                    # ok as is
-        self.ABDUCTION_OFFSET = 0.020 # distance from abduction axis to leg     # ok amend
+        self.ABDUCTION_OFFSET = 0.035  # distance from abduction axis to leg    # ok amend
         self.FOOT_RADIUS = 0.0125                                               # ok amend
 
         self.HIP_L = 0.0394                                                     # ok as is
