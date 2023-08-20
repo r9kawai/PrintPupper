@@ -13,7 +13,7 @@ printpupper.com は誰でも作れるオープンソースの四足歩行ロボ�
 ・拡張性あり、改造が容易、IMU搭載が可能  
 ・RaspberryPi 3以降または、Raspberrypi Zero W での作成が可能  
 ## printpupper.com  
-[printpupper.com](printpupper.com)  
+[https://www.printpupper.com/](https://www.printpupper.com/)  
 This portal site explains the assembly procedure with detailed videos.  
 このポータルサイトでは組立手順を詳細な動画で説明しています。  
 
