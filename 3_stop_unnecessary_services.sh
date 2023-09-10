@@ -23,6 +23,6 @@ systemctl disable rpi-eeprom-update.service
 systemctl stop systemd-random-seed.service
 systemctl disable systemd-random-seed.service
 systemctl stop systemd-networkd-wait-online.service
-systemctl disable systemd-networkd-wait-online.service
+systemctl mask systemd-networkd-wait-online.service
 echo ...done
 
