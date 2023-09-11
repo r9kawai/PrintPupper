@@ -1,4 +1,4 @@
-#!/bin/sh -v
+#!/bin/sh
 echo Stop unnecessary services.
 systemctl stop alsa-restore.service
 systemctl disable alsa-restore.service
@@ -24,5 +24,6 @@ systemctl stop systemd-random-seed.service
 systemctl disable systemd-random-seed.service
 systemctl stop systemd-networkd-wait-online.service
 systemctl mask systemd-networkd-wait-online.service
-echo ...done
+sudo sed -i -e '$a\ntimeout 15\n' /etc/dhcpcd.conf
+echo ...done, Please reboot
 

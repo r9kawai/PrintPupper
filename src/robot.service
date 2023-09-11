@@ -1,6 +1,6 @@
 [Unit]
 Description = PrintPupper robot control service
-After = joystick.service multi-user.target
+After = joystick.service
 
 [Service]
 ExecStartPre = sleep 1

@@ -1,9 +1,9 @@
 [Unit]
 Description = PrintPupper joystick service
-After = bluetooth.target multi-user.target
+After = multi-user.target
 
 [Service]
-ExecStartPre = sleep 5
+ExecStartPre = sleep 1
 ExecStart = sudo /usr/bin/python3 /home/pi/PrintPupper/src/PupperCommand/joystick.py
 RestartSec = 2
 KillSignal = 2

@@ -1,4 +1,4 @@
-#!/bin/sh -v
+#!/bin/sh
 echo Install PrintPupper depend packages...
 apt install pigpiod -y
 apt install libatlas-base-dev -y

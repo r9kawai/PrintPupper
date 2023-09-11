@@ -9,4 +9,4 @@ sudo rm -rf /tmp
 sudo rm -rf /var/tmp
 sudo rm -rf /var/log
 
-echo please reboot
+echo ...done, Please reboot
