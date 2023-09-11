@@ -24,6 +24,6 @@ systemctl stop systemd-random-seed.service
 systemctl disable systemd-random-seed.service
 systemctl stop systemd-networkd-wait-online.service
 systemctl mask systemd-networkd-wait-online.service
-sudo sed -i -e '$a\ntimeout 15\n' /etc/dhcpcd.conf
+sudo sed -i -e '$atimeout 15\n' /etc/dhcpcd.conf
 echo ...done, Please reboot
 
