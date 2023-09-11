@@ -11,7 +11,7 @@ printpupper.com は誰でも作れるオープンソースの四足歩行ロボ�
 ・キャリブレーション作業がジョイパッドだけで可能 (New)  
 ・RC用大容量バッテリー搭載可能で30分の連続歩行  
 ・拡張性あり、改造が容易、IMU搭載が可能  
-・RaspberryPi 3以降または、Raspberrypi Zero W での作成が可能  
+・Raspberry Pi 3以降または、Raspberry Pi Zero 2 W での作成が可能  
 ## printpupper.com  
 [https://www.printpupper.com/](https://www.printpupper.com/)  
 This portal site explains the assembly procedure with detailed videos.  
