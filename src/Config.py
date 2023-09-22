@@ -54,9 +54,9 @@ class Configuration:
         self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.3                           # ok amend
-        self.max_y_velocity = 0.2                           # ok amend
-        self.max_yaw_rate = 1.25                            # ok amend
+        self.max_x_velocity = 0.26                          # ok amend
+        self.max_y_velocity = 0.16                          # ok amend
+        self.max_yaw_rate = 1.1                             # ok amend
         self.max_pitch = 25.0 * np.pi / 180.0               # ok amend
 
         #################### MOVEMENT PARAMS ####################
@@ -95,10 +95,10 @@ class Configuration:
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.11  # duration of the phase where all four feet are on the ground     # ok amend
+            0.19  # duration of the phase where all four feet are on the ground     # ok amend
         )
         self.swing_time = (
-            0.165 # duration of the phase when only two feet are on the ground      # ok amend
+            0.12  # duration of the phase when only two feet are on the ground      # ok amend
         )
 
         ######################## GEOMETRY ######################
