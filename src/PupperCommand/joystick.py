@@ -50,6 +50,7 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
         long_x_time = 0
         long_circle_time = 0
         long_triangle_time = 0
+        long_R1_time = 0
         while joydev_connect:
             if rate_counter >= MESSAGE_RATE:
                 rate_counter_end = time.perf_counter()
@@ -102,6 +103,10 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
                 long_triangle_time += 1
             else:
                 long_triangle_time = 0
+            if R1:
+                long_R1_time +=1
+            else:
+                long_R1_time = 0
 
             joymsg = {
                 "ly": left_y,
@@ -121,6 +126,7 @@ def forPS4orUSBjoystick(ps4_usb, devpath):
                 "long_x": (True if long_x_time == MESSAGE_RATE else False),
                 "long_circle": (True if long_circle_time == MESSAGE_RATE else False),
                 "long_triangle": (True if long_triangle_time == MESSAGE_RATE else False),
+                "long_R1" : (True if long_R1_time == MESSAGE_RATE else False),
 
                 "message_rate": MESSAGE_RATE,
                 "ps4_usb" : ps4_usb,
