@@ -94,11 +94,11 @@ def main(use_imu=False):
                 if state.behavior_state == BehaviorState.REST:
                     joystick_interface.set_color(config.ps4_torot_color)
                     hardware_interface.set_led_blue(True)
-                    print("Robot start torot")
+                    #print("Robot start torot")
                 else:
                     joystick_interface.set_color(config.ps4_activated_color)
                     hardware_interface.set_led_blue(False)
-                    print("Robot stop torot")
+                    #print("Robot stop torot")
 
             # Read imu data. Orientation will be None if no data was available
             quat_orientation = (
