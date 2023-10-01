@@ -16,6 +16,12 @@ class JoystickInterface:
         self.previous_state = BehaviorState.REST
         self.previous_hop_toggle = 0
         self.previous_activate_toggle = 0
+
+        self.auto_trot = False
+        self.auto_trot_sensitivity = 0.25
+        self.auto_trot_timer = 75
+        self.auto_trot_counter = 0
+
         self.rx_ry_switch = False
         self.last_msg = self.get_null_joymsg()
 
@@ -56,8 +62,46 @@ class JoystickInterface:
                 print('RX/RY reverse')
 
             ####### Handle discrete commands ########
-            # Check if requesting a state transition to trotting, or from trotting to resting
+            # for Auto trot added function
+            if msg["long_R1"]:
+                msg["long_R1"] = False
+                self.auto_trot = not self.auto_trot
+                if self.auto_trot:
+                    self.auto_trot_counter = self.auto_trot_timer
+                    print('auto trot mode:On')
+                else:
+                    print('auto trot mode:Off')
+
             gait_toggle = msg["R1"]
+            now_trot = (state.behavior_state == BehaviorState.TROT)
+            input_move_on = False
+            msg_val_lx = float(msg["lx"])
+            msg_val_ly = float(msg["ly"])
+            msg_val_rx = float(msg["rx"])
+            msg_val_ry = float(msg["ry"])
+            if(abs(msg_val_lx) >= self.auto_trot_sensitivity):
+                input_move_on = True
+            if(abs(msg_val_ly) >= self.auto_trot_sensitivity):
+                input_move_on = True
+            if self.rx_ry_switch:
+                if(abs(msg_val_ry) >= self.auto_trot_sensitivity):
+                    input_move_on = True
+            else:
+                if(abs(msg_val_rx) >= self.auto_trot_sensitivity):
+                    input_move_on = True
+            if input_move_on:
+                self.auto_trot_counter = self.auto_trot_timer
+            elif self.auto_trot_counter > 0:
+                self.auto_trot_counter -= 1
+
+            if self.auto_trot and (not now_trot) and input_move_on:
+                gait_toggle = 1
+                #print('auto trot:On')
+            elif self.auto_trot and now_trot and (not input_move_on) and (self.auto_trot_counter == 1):
+                gait_toggle = 1
+                #print('auto trot:Off')
+
+            # Check if requesting a state transition to trotting, or from trotting to resting
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
 
             # Check if requesting a state transition to hopping, from trotting or resting
@@ -79,21 +123,21 @@ class JoystickInterface:
             self.previous_activate_toggle = activate_toggle
 
             ####### Handle continuous commands ########
-            x_vel = msg["ly"] * self.config.max_x_velocity
-            y_vel = msg["lx"] * -self.config.max_y_velocity
+            x_vel = msg_val_ly * self.config.max_x_velocity
+            y_vel = msg_val_lx * -self.config.max_y_velocity
             command.horizontal_velocity = np.array([x_vel, y_vel])
             if self.rx_ry_switch:
-                command.yaw_rate = (msg["ry"] * -1) * -self.config.max_yaw_rate
+                command.yaw_rate = (msg_val_ry * -1) * -self.config.max_yaw_rate
             else:
-                command.yaw_rate = msg["rx"] * -self.config.max_yaw_rate
+                command.yaw_rate = msg_val_rx * -self.config.max_yaw_rate
 
             message_rate = msg["message_rate"]
             message_dt = 1.0 / message_rate
 
             if self.rx_ry_switch:
-                pitch =  (msg["rx"] + self.config.pitch_gain) * self.config.max_pitch
+                pitch =  (msg_val_rx + self.config.pitch_gain) * self.config.max_pitch
             else:
-                pitch = ((msg["ry"] + self.config.pitch_gain) * -1) * self.config.max_pitch
+                pitch = ((msg_val_ry + self.config.pitch_gain) * -1) * self.config.max_pitch
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )
@@ -147,6 +191,7 @@ class JoystickInterface:
                 "long_x": False,
                 "long_circle": False,
                 "long_triangle": False,
+                "long_R1": False,
                 "message_rate": 25,
                 "ps4_usb" : True,
             }
