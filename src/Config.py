@@ -60,14 +60,14 @@ class Configuration:
         self.max_pitch = 25.0 * np.pi / 180.0               # ok amend
 
         #################### MOVEMENT PARAMS ####################
-        self.z_time_constant = 0.02
+        self.z_time_constant = 0.066
         self.z_speed = 0.03  # maximum speed [m/s]
         self.pitch_deadband = 0.06                          # ok amend
         self.pitch_gain = 0.2                               # ok add
-        self.pitch_time_constant = 0.25
+        self.pitch_time_constant = 0.165
         self.max_pitch_rate = 0.3                           # ok amend
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
-        self.yaw_time_constant = 0.6                        # ok amend
+        self.yaw_time_constant = 0.33                       # ok amend
         self.max_stance_yaw = 0.6                           # ok amend
         self.max_stance_yaw_rate = 1.0                      # ok amend
 
@@ -88,17 +88,17 @@ class Configuration:
         )
 
         #################### GAIT #######################
-        self.dt = 0.02
-        self.dt_sleep = 0.005
+        self.dt = 0.033
+        self.dt_min_sleep = 0.003
         self.num_phases = 4
         self.contact_phases = np.array(
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.19  # duration of the phase where all four feet are on the ground     # ok amend
+            0.198  # duration of the phase where all four feet are on the ground     # ok amend
         )
         self.swing_time = (
-            0.12  # duration of the phase when only two feet are on the ground      # ok amend
+            0.099  # duration of the phase when only two feet are on the ground      # ok amend
         )
 
         ######################## GEOMETRY ######################
