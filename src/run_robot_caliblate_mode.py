@@ -129,7 +129,7 @@ class run_robot_caliblate_mode():
 
             tick += 1
             pre_msg = msg
-            time.sleep(self.configif.dt_sleep)
+            time.sleep(0.005)
 
         self.hardwareif.set_led_green(0)
         self.hardwareif.set_led_blue(0)
