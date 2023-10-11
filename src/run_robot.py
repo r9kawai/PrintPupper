@@ -34,7 +34,7 @@ def main(use_imu=False):
     joystick_interface = JoystickInterface(config)
     print("Done.")
 
-    last_loop = time.time()
+    last_loop_time = time.time()
 
     print("Summary of gait parameters:")
     print("overlap time: ", config.overlap_time)
@@ -68,17 +68,13 @@ def main(use_imu=False):
                 command.caliblate_mode_event = False
                 run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
                 sys.exit()
-            time.sleep(config.dt_sleep)
+            time.sleep(0.01)
 
         print("Robot activated.")
         hardware_interface.set_led_green(True)
         joystick_interface.set_color(config.ps4_activated_color)
         while True:
-            now = time.time()
-            if now - last_loop < config.dt:
-                time.sleep(config.dt_sleep)
-                continue
-            last_loop = time.time()
+            d_time = time.time()
 
             # Parse the udp joystick commands and then update the robot controller's parameters
             command = joystick_interface.get_command(state)
@@ -111,6 +107,14 @@ def main(use_imu=False):
 
             # Update the pwm widths going to the servos
             hardware_interface.set_actuator_postions(state.joint_angles)
+
+            # cycle tune
+            t_time = time.time()
+            dt = (float)(t_time - d_time)
+            dt_dt = (float)(config.dt - dt)
+            dt_dt = round(dt_dt, 3)
+            if (dt_dt > 0) and (dt_dt >= config.dt_min_sleep):
+                time.sleep(dt_dt)
 
 
 main()

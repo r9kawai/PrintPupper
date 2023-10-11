@@ -6,7 +6,7 @@ from PS4Joystick import Joystick
 from USBJoystick import USBJoystick
 import time
 
-MESSAGE_RATE = 25
+MESSAGE_RATE = 15
 JOYSOCK_HOST = 'localhost'
 JOYSOCK_PORT = 51000
 JOYSOCK_MAX_DATA = 2048
