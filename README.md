@@ -1,4 +1,5 @@
 # PrintPupper  
+## tag "v0.1 fix" 2023 Oct 23  
 PrintPupper is open source DIY quadruped robot, composition are 3D printed and common cheaper parts only. Based on "Pupper" developed by Stanford University, it was redesigned to be cheaper and easier to make, then no needed carbon cutting parts.  
 printpupper.com は誰でも作れるオープンソースの四足歩行ロボットです。スタンフォード大学の開発したPupperを元に、より安価に簡単に作れるよう再設計しました。3DプリンタとAmazonで買える部品だけで12自由度の本格四足ロボを作れます。
 カーボン切出部品など不要。設計Git公開です。組立手順を詳細に説明した動画を公開しています。
