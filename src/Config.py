@@ -106,8 +106,14 @@ class Configuration:
         self.LEG_LR = 0.04  # left-right distance from center line to leg plane
         self.LEG_L2 = 0.0995
         self.LEG_L1 = 0.1235
+
+        self.LEG_UNPRALLEL_L3 = self.LEG_L2 / 2
+        self.LEG_UNPRALLEL_L4 = 0.0350
+        self.LEG_UNPRALLEL_L5 = 0.1080
+        self.UNPRALLEL_ofstX = 0.0200
+        self.UNPRALLEL_ofstY = 0.0250
+
         self.ABDUCTION_OFFSET = 0.035   # distance from abduction axis to leg    # ok amend
-        self.FOOT_RADIUS = 0.0125
 
         self.HIP_L = 0.0394
         self.HIP_W = 0.0744
