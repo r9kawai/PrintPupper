@@ -111,6 +111,9 @@ class JoystickInterface:
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
+            if command.activate_event:
+                print("command.height reset.")
+                state.height = self.config.default_z_ref
 
             if msg["long_x"]:
                 msg["long_x"] = False
@@ -151,9 +154,11 @@ class JoystickInterface:
 
             height_movement = msg["dpady"]
             command.height = state.height - message_dt * self.config.z_speed * height_movement
-            
-            roll_movement = - msg["dpadx"]
-            command.roll = state.roll + message_dt * self.config.roll_speed * roll_movement
+            command.height = max(self.config.min_z_ref, min(command.height, self.config.max_z_ref))
+
+            # Roll control is canceled
+            # roll_movement = - msg["dpadx"]
+            # command.roll = state.roll + message_dt * self.config.roll_speed * roll_movement
 
             command.joy_ps4_usb = msg["ps4_usb"]
 

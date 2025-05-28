@@ -54,10 +54,10 @@ class Configuration:
         self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.26
-        self.max_y_velocity = 0.16
+        self.max_x_velocity = 0.13
+        self.max_y_velocity = 0.08
         self.max_yaw_rate = 1.1
-        self.max_pitch = 25.0 * np.pi / 180.0
+        self.max_pitch = 12.5 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
         self.z_time_constant = 0.02
@@ -73,13 +73,15 @@ class Configuration:
 
         #################### STANCE ####################
         self.delta_x = 0.1
-        self.delta_y = 0.09
-        self.x_shift = 0.0
-        self.default_z_ref = -0.15                          # needs State.py and Command.py same value
+        self.delta_y = 0.075
+        self.x_shift = 0.000
+        self.min_z_ref = -0.136 - 0.040
+        self.max_z_ref = -0.136
+        self.default_z_ref = self.min_z_ref
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.08
+        self.z_clearance = 0.040
         self.alpha = (
             0.5  # Ratio between touchdown distance and total horizontal stance movement
         )
@@ -95,10 +97,10 @@ class Configuration:
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.20  # duration of the phase where all four feet are on the ground
+            0.00  # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.12  # duration of the phase when only two feet are on the ground 
+            0.40  # duration of the phase when only two feet are on the ground 
         )
 
         ######################## GEOMETRY ######################
@@ -114,15 +116,6 @@ class Configuration:
         self.UNPRALLEL_ofstY = 0.0250
 
         self.ABDUCTION_OFFSET = 0.035   # distance from abduction axis to leg    # ok amend
-
-        self.HIP_L = 0.0394
-        self.HIP_W = 0.0744
-        self.HIP_T = 0.0214
-        self.HIP_OFFSET = 0.0132
-
-        self.L = 0.276
-        self.W = 0.100
-        self.T = 0.050
 
         self.LEG_ORIGINS = np.array(
             [
