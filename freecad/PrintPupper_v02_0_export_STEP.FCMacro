@@ -1,0 +1,64 @@
+# Python macro for PrintPupper
+# Auto export .step format file for 3d print parts.
+import FreeCAD as App, Part
+
+print('Macro start : PrintPupper auto export .step format file for 3D printer parts.')
+
+doc = App.ActiveDocument
+docfile_ = doc.Name
+print(docfile_)
+
+docfile = docfile_ + '.FCStd'
+outpath = './exportSTEP/'
+
+bodylabel_exname_list = [
+    ['print_knee_horn',    'print_knee_horn_4pcs',    'Y',  1],
+    ['print_upper_leg',    'print_upper_leg_4pcs',    'Y',  1],
+    ['print_lower_leg',    'print_lower_leg_4pcs',    'Y',  1],
+    ['print_knee_linkage', 'print_knee_linkage_4pcs', 'Y', -1],
+    ['print_coxa',         'print_coxa',              'Y',  1],
+]
+
+def export_body_rot90_step(doc_path: str,
+                           body_label: str,
+                           step_path: str,
+                           axis: str = 'Z',
+                           quarters: int = 1) -> None:
+    # ---------- 1. ドキュメント取得 ----------
+    if not os.path.isfile(doc_path):
+        raise FileNotFoundError(doc_path)
+
+    # 既に開いていれば再利用
+    doc = next((d for d in App.listDocuments().values()
+                if os.path.abspath(d.FileName) == os.path.abspath(doc_path)),
+               None) or App.openDocument(doc_path)
+
+    # ---------- 2. Body をラベル名で取得 ----------
+    try:
+        body = next(obj for obj in doc.getObjectsByLabel(body_label)
+                    if obj.TypeId == "PartDesign::Body")
+    except StopIteration:
+        raise LookupError(f"Body '{body_label}' not found in {doc_path}")
+
+    # ---------- 3. 形状コピー → 回転 ----------
+    shp = body.Shape.copy()                           # オリジナルは無傷
+    axis_vec = {'X': App.Vector(1,0,0),
+                'Y': App.Vector(0,1,0),
+                'Z': App.Vector(0,0,1)}[axis.upper()]
+    angle = 90 * quarters                             # 90°×n
+    shp.rotate(App.Vector(0,0,0), axis_vec, angle)    # 原点回り
+
+    # ---------- 4. STEP 出力 ----------
+    shp.exportStep(step_path)
+    print(f"Exported: {step_path}")
+
+if __name__ == "__main__":
+    print(f"From {docfile} To {outpath} ...")
+    for bodylabel_exname in bodylabel_exname_list:
+        bodylabel = bodylabel_exname[0]
+        exname = bodylabel_exname[1]
+        axis = bodylabel_exname[2]
+        quarters = bodylabel_exname[3] 
+        expath = outpath + exname + '.step'
+        export_body_rot90_step(docfile, bodylabel, expath, axis, quarters)
+    print('Macro done')
