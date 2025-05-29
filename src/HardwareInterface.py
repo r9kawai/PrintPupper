@@ -103,10 +103,10 @@ class HardwareInterface:
 
                 #if math.isnan(kneeX):
                 if True:
-                    print(f"FL : coxa {coxa:6.2f}({math.degrees(coxa):6.2f}), ", end="")
-                    print(f"leg {leg:6.2f}({math.degrees(leg):6.2f}), ", end="")
-                    print(f"knee {knee:6.2f}({math.degrees(knee):6.2f}), ", end="")
-                    print(f"kneeX {kneeX:6.2f}({math.degrees(kneeX):6.2f})")
+                    print(f"FL : coxa {coxa:+07.2f}({math.degrees(coxa):+07.2f}), ", end="")
+                    print(f"leg {leg:+07.2f}({math.degrees(leg):+07.2f}), ", end="")
+                    print(f"knee {knee:+07.2f}({math.degrees(knee):+07.2f}), ", end="")
+                    print(f"kneeX {kneeX:+07.2f}({math.degrees(kneeX):+07.2f})")
 
                 joint_angles[2, leg_index] = kneeX * self.servo_params.servo_multipliers[2, leg_index]
                 ##############################################################

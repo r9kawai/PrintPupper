@@ -71,14 +71,6 @@ class Configuration:
         self.max_stance_yaw = 0.6
         self.max_stance_yaw_rate = 1.0
 
-        #################### STANCE ####################
-        self.delta_x = 0.1
-        self.delta_y = 0.075
-        self.x_shift = 0.000
-        self.min_z_ref = -0.136 - 0.040
-        self.max_z_ref = -0.136
-        self.default_z_ref = self.min_z_ref
-
         #################### SWING ######################
         self.z_coeffs = None
         self.z_clearance = 0.040
@@ -104,18 +96,25 @@ class Configuration:
         )
 
         ######################## GEOMETRY ######################
-        self.LEG_FB = 0.10  # front-back distance from center line to leg axis
-        self.LEG_LR = 0.04  # left-right distance from center line to leg plane
-        self.LEG_L2 = 0.0995
-        self.LEG_L1 = 0.1235
+        self.LEG_FB = 0.100             # front-back distance from center line to leg axis
+        self.LEG_LR = 0.045             # left-right distance from center line to leg plane
+        self.ABDUCTION_OFFSET = 0.043   # distance from abduction axis to leg
 
-        self.LEG_UNPRALLEL_L3 = self.LEG_L2 / 2
-        self.LEG_UNPRALLEL_L4 = 0.0350
-        self.LEG_UNPRALLEL_L5 = 0.1080
-        self.UNPRALLEL_ofstX = 0.0200
-        self.UNPRALLEL_ofstY = 0.0250
+        self.LEG_L1 = 0.100
+        self.LEG_L2 = 0.100
+        self.LEG_UNPRALLEL_L3 = 0.050
+        self.LEG_UNPRALLEL_L4 = 0.050
+        self.LEG_UNPRALLEL_L5 = 0.080
+        self.UNPRALLEL_ofstX = -0.005
+        self.UNPRALLEL_ofstY =  0.025
 
-        self.ABDUCTION_OFFSET = 0.035   # distance from abduction axis to leg    # ok amend
+        #################### STANCE ####################
+        self.delta_x = self.LEG_FB
+        self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET
+        self.x_shift = 0.020
+        self.default_z_ref = -0.140
+        self.min_z_ref = self.default_z_ref - 0.040
+        self.max_z_ref = self.default_z_ref + 0.040
 
         self.LEG_ORIGINS = np.array(
             [
