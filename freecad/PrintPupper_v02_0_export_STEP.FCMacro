@@ -14,9 +14,9 @@ outpath = './exportSTEP/'
 bodylabel_exname_list = [
     ['print_knee_horn',    'print_knee_horn_4pcs',    'Y',  1],
     ['print_upper_leg',    'print_upper_leg_4pcs',    'Y',  1],
-    ['print_lower_leg',    'print_lower_leg_4pcs',    'Y', -1],
+    ['print_lower_leg_L',  'print_lower_leg_L_2pcs',  'Y', -1],
     ['print_knee_linkage', 'print_knee_linkage_4pcs', 'Y', -1],
-    ['print_coxa',         'print_coxa',              'Y',  1],
+    ['print_coxa_FL',      'print_coxa_FL_1pcs',      'Y',  1],
 ]
 
 def export_body_rot90_step(doc_path: str,

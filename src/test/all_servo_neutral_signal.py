@@ -1,12 +1,11 @@
 import sys
 import os
-# 自分の親ディレクトリをインポートパスに追加
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
-
 import time
 import pigpio
 import RPi.GPIO as GPIO
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
 from Config import PWMParams, ServoParams
 
 LED_GREEN_GPIO = 0

@@ -111,8 +111,10 @@ class Configuration:
         #################### STANCE ####################
         self.delta_x = self.LEG_FB
         self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET
-        self.x_shift = 0.020
-        self.default_z_ref = -0.140
+        #self.x_shift = 0.020
+        #self.default_z_ref = -0.140
+        self.x_shift = 0.000
+        self.default_z_ref = -0.14136
         self.min_z_ref = self.default_z_ref - 0.040
         self.max_z_ref = self.default_z_ref + 0.040
 
