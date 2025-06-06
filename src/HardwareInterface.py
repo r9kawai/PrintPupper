@@ -90,30 +90,30 @@ class HardwareInterface:
 
     def send_servo_commands(self, joint_angles):
         for leg_index in range(4):
-            if leg_index == 1:
-                ##############################################################
-                rad0 = joint_angles[0, leg_index]
-                rad1 = joint_angles[1, leg_index]
-                rad2 = joint_angles[2, leg_index]
+            ##############################################################
+            rad0 = joint_angles[0, leg_index]
+            rad1 = joint_angles[1, leg_index]
+            rad2 = joint_angles[2, leg_index]
 
-                coxa  =                 rad0 * self.servo_params.servo_multipliers[0, leg_index]
-                leg   = (math.pi / 2) + rad1 * self.servo_params.servo_multipliers[1, leg_index]
-                knee  =                 rad2 * self.servo_params.servo_multipliers[2, leg_index]
-                kneeX = compute_unparallel_link_knee.compute_unparallel_link_knee(self.config, leg, knee)
+            coxa  =                 rad0 * self.servo_params.servo_multipliers[0, leg_index]
+            leg   = (math.pi / 2) + rad1 * self.servo_params.servo_multipliers[1, leg_index]
+            knee  =                 rad2 * self.servo_params.servo_multipliers[2, leg_index]
+            kneeX = compute_unparallel_link_knee.compute_unparallel_link_knee(self.config, leg, knee)
 
-                #if math.isnan(kneeX):
-                if True:
-                    print(f"FL : coxa {coxa:+07.2f}({math.degrees(coxa):+07.2f}), ", end="")
-                    print(f"leg {leg:+07.2f}({math.degrees(leg):+07.2f}), ", end="")
-                    print(f"knee {knee:+07.2f}({math.degrees(knee):+07.2f}), ", end="")
-                    print(f"kneeX {kneeX:+07.2f}({math.degrees(kneeX):+07.2f})")
+            #if math.isnan(kneeX):
+            if True:
+                print(f"LEG{leg_index} : coxa {coxa:+07.2f}({math.degrees(coxa):+07.2f}), ", end="")
+                print(f"leg {leg:+07.2f}({math.degrees(leg):+07.2f}), ", end="")
+                print(f"knee {knee:+07.2f}({math.degrees(knee):+07.2f}), ", end="")
+                print(f"kneeX {kneeX:+07.2f}({math.degrees(kneeX):+07.2f})")
+                if leg_index == 3:
+                    print("")
 
-                joint_angles[2, leg_index] = kneeX * self.servo_params.servo_multipliers[2, leg_index]
-                ##############################################################
+            joint_angles[2, leg_index] = kneeX * self.servo_params.servo_multipliers[2, leg_index]
+            ##############################################################
 
             for axis_index in range(3):
                 angle = joint_angles[axis_index, leg_index]
-#               duty_cycle = self.angle_to_duty_cycle(angle, axis_index, leg_index)
                 duty_cycle = self.angle_to_pwmdutycycle(angle, axis_index, leg_index)
                 self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], duty_cycle)
         return
