@@ -1,0 +1,17 @@
+import FreeCAD as App
+import FreeCADGui as Gui
+
+print("PlaceReset")
+
+doc = App.ActiveDocument
+sel = Gui.Selection.getSelection()
+
+for obj in sel:
+    obj.Placement = App.Placement()
+    if hasattr(obj, "AttachmentOffset"):
+        obj.AttachmentOffset = App.Placement()
+
+if doc:
+    doc.recompute()
+
+Gui.updateGui()

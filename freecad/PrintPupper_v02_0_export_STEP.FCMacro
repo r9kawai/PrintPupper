@@ -17,6 +17,7 @@ bodylabel_exname_list = [
     ['print_lower_leg_L',  'print_lower_leg_L_2pcs',  'Y', -1],
     ['print_knee_linkage', 'print_knee_linkage_4pcs', 'Y', -1],
     ['print_coxa_FL',      'print_coxa_FL_1pcs',      'Y',  1],
+    ['print_coxa_BL',      'print_coxa_BL_1pcs',      'Y',  1],
 ]
 
 def export_body_rot90_step(doc_path: str,
