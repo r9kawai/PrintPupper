@@ -1,21 +1,8 @@
 import math
 from Config import Configuration
 
-def compute_unparallel_link_knee(config, theta_leg, theta_knee_internal):
-    """
-    Parameters:
-    -----------
-    theta_leg : float
-        L1（大腿リンク）の絶対角度 [rad]
-    theta_knee_internal : float
-        L1とL2の内角 [rad]
-
-    Returns:
-    --------
-    theta_s3 : float
-        サーボ3の必要角度 [rad]、構成不能な場合は NaN
-    """
-    # 非平行リンク機構パラメータ（必要に応じて外部から設定可能）
+def compute_unparallel_link_knee(config, theta_leg, theta_knee, mirror_right):
+    # 非平行リンク機構パラメータ
     L1 = config.LEG_L1
     L2 = config.LEG_L2
     L3_offset = config.LEG_UNPRALLEL_L3
@@ -24,45 +11,77 @@ def compute_unparallel_link_knee(config, theta_leg, theta_knee_internal):
     ofstX = config.UNPRALLEL_ofstX
     ofstY = config.UNPRALLEL_ofstY
 
-    # L2方向は L1から見て (π - 内角) だけ反時計回り
-    theta_L2 = theta_leg + (math.pi - theta_knee_internal)
+    # 鏡像（左右）反転：theta_legとtheta_kneeを符号反転
+    if mirror_right:
+        theta_leg = -theta_leg
+        theta_knee = -theta_knee
 
-    # 膝位置（L1終端）
-    knee_x = L1 * math.cos(theta_leg)
-    knee_y = L1 * math.sin(theta_leg)
+    # L1のベクトル
+    P1_x = L1 * math.cos(theta_leg)
+    P1_y = L1 * math.sin(theta_leg)
 
-    # ロッド接続点（L3）
-    L3x = knee_x + L3_offset * math.cos(theta_L2)
-    L3y = knee_y + L3_offset * math.sin(theta_L2)
+    # L2の方向（L1から見て反時計回りにtheta_knee）
+    theta_L2 = theta_leg + theta_knee
+    P2_x = P1_x + L2 * math.cos(theta_L2)
+    P2_y = P1_y + L2 * math.sin(theta_L2)
 
-    dx = L3x - ofstX
-    dy = L3y - ofstY
-    dist = math.hypot(dx, dy)
+    # L2の中点（M点）
+    M_x = (P1_x + P2_x) / 2
+    M_y = (P1_y + P2_y) / 2
 
-    EPS = 1e-6
-    if dist > (L4 + L5 + EPS) or dist < abs(L4 - L5) - EPS:
-        return float('nan')
+    # サーボ3の原点（S3点）
+    S3_x = ofstX
+    S3_y = ofstY
 
-    cos_beta = (L4**2 + dist**2 - L5**2) / (2 * L4 * dist)
-    cos_beta = max(-1.0, min(1.0, cos_beta))
-    beta = math.acos(cos_beta)
+    # ベクトルS3→Mの長さ
+    dx = M_x - S3_x
+    dy = M_y - S3_y
+    d_sq = dx**2 + dy**2
+    d = math.sqrt(d_sq)
 
-    phi = math.atan2(dy, dx)
-    theta_s3_a = phi - beta
-    theta_s3_b = phi + beta
+    # 三角形 S3-L4-L5 の余弦定理による角度計算
+    cos_a = (d_sq + L4**2 - L5**2) / (2 * d * L4)
+    if abs(cos_a) > 1.0:
+        return float('nan')  # 到達不能
 
-    def angle_diff(a, b):
-        d = (a - b + math.pi) % (2 * math.pi) - math.pi
-        return abs(d)
+    angle_a = math.acos(cos_a)
 
-    return theta_s3_a if angle_diff(theta_s3_a, theta_L2) < angle_diff(theta_s3_b, theta_L2) else theta_s3_b
+    # ベクトルS3→Mの角度
+    angle_to_M = math.atan2(dy, dx)
+
+    # S3から見たロッド（L4）の角度：反時計回りで算出
+    theta_servo3_candidate = angle_to_M - angle_a
+
+    # 解の選択：L2方向により近い解を選択
+    theta_servo3_alt = angle_to_M + angle_a
+    L2_vec = (math.cos(theta_L2), math.sin(theta_L2))
+    diff1 = (math.cos(theta_servo3_candidate) - L2_vec[0])**2 + (math.sin(theta_servo3_candidate) - L2_vec[1])**2
+    diff2 = (math.cos(theta_servo3_alt) - L2_vec[0])**2 + (math.sin(theta_servo3_alt) - L2_vec[1])**2
+    theta_servo3 = theta_servo3_candidate if diff1 < diff2 else theta_servo3_alt
+
+    # 結果反転
+    if not mirror_right:
+        theta_servo3 = -theta_servo3
+
+    return theta_servo3
+
+
+
+
 
 if __name__=="__main__":
     _config = Configuration()
     
-    theta_leg = math.radians(135)
-    theta_knee_internal = math.radians(-74.0815)
-    
-    theta_s3 = compute_unparallel_link_knee(_config, theta_leg, theta_knee_internal)
-    print(f"compute_servo3_angle( {math.degrees(theta_leg):6.2f}, {math.degrees(theta_knee_internal):6.2f} ) = {math.degrees(theta_s3):6.4f}")
+    arg_leg_deg = 135
+    arg_knee_deg = -89
+    theta_leg = math.radians(arg_leg_deg)
+    theta_knee_internal = math.pi - math.radians(arg_knee_deg)
+    theta_s3 = compute_unparallel_link_knee(_config, theta_leg, theta_knee_internal, False)
+    print(f"compute_unparallel_link_knee( {arg_leg_deg}, {arg_knee_deg} ) = {math.degrees(theta_s3):6.4f}")
 
+    arg_leg_deg = -135
+    arg_knee_deg = 89
+    theta_leg = math.radians(arg_leg_deg)
+    theta_knee_internal = math.pi - math.radians(arg_knee_deg)
+    theta_s3 = compute_unparallel_link_knee(_config, theta_leg, theta_knee_internal, True)
+    print(f"compute_unparallel_link_knee( {arg_leg_deg}, {arg_knee_deg} ) = {math.degrees(theta_s3):6.4f}")
