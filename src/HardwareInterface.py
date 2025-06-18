@@ -2,7 +2,7 @@ import math
 import pigpio
 import RPi.GPIO as GPIO
 from Config import Configuration, ServoParams, PWMParams
-import compute_unparallel_link_knee
+from compute_unparallel_link_knee import compute_unparallel_link_knee
 
 LED_GREEN_GPIO = 0
 LED_BLUE_GPIO = 1
@@ -22,6 +22,7 @@ class HardwareInterface:
         self.pwm_params = PWMParams()
         self.servo_params = ServoParams()
         self.initialize_pwm()
+        self.culk = compute_unparallel_link_knee(self.config)
         return
 
     def set_actuator_postions(self, joint_angles):
@@ -92,18 +93,23 @@ class HardwareInterface:
         debug = False
 
         for leg_index in range(4):
-            rad0 = joint_angles[0, leg_index]
-            rad1 = joint_angles[1, leg_index]
-            rad2 = joint_angles[2, leg_index]
+            # 非平行リンク機構の導入による改修 ------------------------------------------------------------------------
+            # amend for PrintPupper v0.2's unparallel link mechanism
+            rad0 = joint_angles[0, leg_index] * self.servo_params.servo_multipliers[0, leg_index]
+            rad1 = joint_angles[1, leg_index] * self.servo_params.servo_multipliers[1, leg_index]
+            rad2 = joint_angles[2, leg_index] * self.servo_params.servo_multipliers[2, leg_index]
+            coxa  = rad0
+            knee  = rad2
 
-            coxa  = rad0 * self.servo_params.servo_multipliers[0, leg_index]
-            knee  = rad2 * self.servo_params.servo_multipliers[2, leg_index]
+            # compute_unparallel_link_knee の表現型に変換してから非平行リンクを介した場合の knee サーボ角度を再計算
             if leg_index == 0 or leg_index == 2:
-                leg   = -(math.pi + (rad1 * self.servo_params.servo_multipliers[1, leg_index]))
-                kneeX = compute_unparallel_link_knee.compute_unparallel_link_knee(self.config, leg, knee, True)
+                leg = (math.pi / 2) - rad1
+                leg = -leg
+                mirror = True
             else:
-                leg   = math.pi - (rad1 * self.servo_params.servo_multipliers[1, leg_index])
-                kneeX = compute_unparallel_link_knee.compute_unparallel_link_knee(self.config, leg, knee, False)
+                leg = (math.pi / 2) + rad1
+                mirror = False
+            kneeX = self.culk.compute(leg, knee, mirror)
 
             if math.isnan(kneeX):
                 debug = True
@@ -117,7 +123,9 @@ class HardwareInterface:
                 if leg_index == 3:
                         print("")
 
+            # 再計算結果 knee 角度指示に戻す
             joint_angles[2, leg_index] = kneeX * self.servo_params.servo_multipliers[2, leg_index]
+            # ---------------------------------------------------------------------------------------------------------
 
             for axis_index in range(3):
                 angle = joint_angles[axis_index, leg_index]
