@@ -11,21 +11,28 @@ docfile = docfile_ + '.FCStd'
 outpath = './exportSTEP/'
 
 bodylabel_exname_list = [
-    ['print_knee_horn',     '01_print_knee_horn_4pcs',     'Y',  1],
-    ['print_upper_leg',     '02_print_upper_leg_4pcs',     'Y',  1],
-    ['print_knee_linkage',  '03_print_knee_linkage_4pcs',  'Y', -1],
-    ['print_lower_leg_L',   '04_print_lower_leg_L_2pcs',   'Y', -1],
-    ['print_lower_leg_R',   '05_print_lower_leg_R_2pcs',   'Y',  1],
+    ['print_knee_horn',        '01_print_knee_horn_4pcs',     'Y',  1],
+    ['print_upper_leg',        '02_print_upper_leg_4pcs',     'Y',  1],
+    ['print_knee_linkage',     '03_print_knee_linkage_4pcs',  'Y', -1],
+    ['print_lower_leg2_L',     '04_print_lower_leg_L_2pcs',   'Y',  1],
+    ['print_lower_leg2_R',     '05_print_lower_leg_R_2pcs',   'Y', -1],
+    ['print_lower_leg_cap',    '06_print_lower_leg_cap_4pcs', 'Y',  1],
 
-    ['print_coxa_FL',       '06_print_coxa_FL_1pcs',       'Y',  1],
-    ['print_coxa_FR',       '07_print_coxa_FR_1pcs',       'Y', -1],
-    ['print_coxa_BL',       '08_print_coxa_BL_1pcs',       'Y',  1],
-    ['print_coxa_BR',       '09_print_coxa_BR_1pcs',       'Y', -1],
+    ['print_coxa_FL',          '07_print_coxa_FL_1pcs',       'Y',  1],
+    ['print_coxa_FR',          '08_print_coxa_FR_1pcs',       'Y', -1],
+    ['print_coxa_BL',          '09_print_coxa_BL_1pcs',       'Y',  1],
+    ['print_coxa_BR',          '10_print_coxa_BR_1pcs',       'Y', -1],
 
-    ['print_center_torso',  '10_print_center_torso_1pcs',  'Z',  0],
-    ['print_front_torso',   '11_print_front_torso_1pcs',   'Y',  2],
-    ['print_back_torso',    '12_print_back_torso_1pcs',    'Y',  2],
-    ['print_battery_holder','13_print_battery_holder_2pcs','X',  1],
+    ['print_center_torso',     '11_print_center_torso_1pcs',  'Z',  0],
+    ['print_front_torso',      '12_print_front_torso_1pcs',   'Y',  2],
+    ['print_back_torso',       '13_print_back_torso_1pcs',    'Y',  2],
+    ['print_battery_holder',   '14_print_battery_holder_2pcs','X',  1],
+    ['print_pcb_box',          '15_print_pcb_box',            'Z',  0],
+    ['print_pcb_box_lid',      '16_print_pcb_box_lid',        'Y',  2],
+
+    ['print_stand_upper',      '17_print_stand_upper_1pcs',   'Y',  2],
+    ['print_stand_lower',      '18_print_stand_lower_1pcs',   'Z',  0],
+    ['print_calibration_plate','19_print_calibration_plate',  'Y',  1],
 ]
 
 def export_body_rot90_step(doc_path: str,
