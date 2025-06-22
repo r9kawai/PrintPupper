@@ -33,6 +33,10 @@ class HardwareInterface:
         self.send_servo_command(joint_angle, axis, leg)
         return
 
+    def set_actuator_position_noncab(self, joint_angle, axis, leg):
+        self.send_servo_command_noncab(joint_angle, axis, leg)
+        return
+
     def deactivate(self):
         self.deactivate_servos()
         return
@@ -71,21 +75,20 @@ class HardwareInterface:
         usec_val_limited = max(self.servo_params.pwm_usec_min, min(usec_val, self.servo_params.pwm_usec_max))
         return int(usec_val_limited)
 
-    def angle_to_duty_cycle(self, angle, axis_index, leg_index):
-        pulsewidth_micros = self.angle_to_pwm(angle, axis_index, leg_index)
-        duty_cyle = int(pulsewidth_micros / 1e6 * self.servo_params.pwm_freq * self.servo_params.pwm_usec_range)
-        return duty_cyle
-
-    def angle_to_pwm(self, angle, axis_index, leg_index):
-        neutral = self.servo_params.neutral_angles[axis_index, leg_index]
+    def angle_to_pwmdutycycle_noncab(self, angle, axis_index, leg_index):
         multi = self.servo_params.servo_multipliers[axis_index, leg_index]
-        angle_deviation = (angle - neutral) * multi
-        pulse_width_micros = self.servo_params.pwm_usec_neutral + (self.servo_params.pwm_usec_per_rad * angle_deviation)
-        return pulse_width_micros
+        angle_deviation = angle * multi
+        usec_val = self.servo_params.pwm_usec_neutral + (self.servo_params.pwm_usec_per_rad * angle_deviation)
+        usec_val_limited = max(self.servo_params.pwm_usec_min, min(usec_val, self.servo_params.pwm_usec_max))
+        return int(usec_val_limited)
 
     def send_servo_command(self, joint_angle, axis, leg):
-#       duty_cycle = self.angle_to_duty_cycle(joint_angle, axis, leg)
         duty_cycle = self.angle_to_pwmdutycycle(joint_angle, axis, leg)
+        self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
+        return
+
+    def send_servo_command_noncab(self, joint_angle, axis, leg):
+        duty_cycle = self.angle_to_pwmdutycycle_noncab(joint_angle, axis, leg)
         self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
         return
 

@@ -9,7 +9,7 @@ from HardwareInterface import HardwareInterface
 from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
 from State import BehaviorState, State
-from run_robot_caliblate_mode import run_robot_caliblate_mode
+from run_robot_caliblate_mode_2 import run_robot_caliblate_mode
 
 def main(use_imu=False):
     """Main program
