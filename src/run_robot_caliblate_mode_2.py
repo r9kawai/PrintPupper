@@ -31,6 +31,7 @@ class run_robot_caliblate_mode():
         self.joystickif = joystick_interface
         self.state = State()
 
+        self.blink_fast = True
         self.mode_btn_que = queue.Queue()
         self.subloop_exit = False
         self.subloop_thread = threading.Thread(target=self.pad_input_subloop)
@@ -46,6 +47,8 @@ class run_robot_caliblate_mode():
         self.ndeg_ofsts = self.tmp_neutraldegs - DEFAULTNEUTRAL_ANGLE_DEGREES
         self.ndeg_ofsts *= -1
 
+        self.all_servo_neutral_signal()
+
         while True:
             try:
                 btn = self.mode_btn_que.get(timeout=0.1)
@@ -54,6 +57,7 @@ class run_robot_caliblate_mode():
             except queue.Empty:
                 continue
 
+        self.blink_fast = False
         mode_exit = False
         while True:
             for leg in range(4):
@@ -112,7 +116,7 @@ class run_robot_caliblate_mode():
                 command.caliblate_mode_event = False
                 self.mode_btn_que.put(Btn.EXIT)
 
-            if (tick % 100) == 0:
+            if (self.blink_fast and (tick % 25) == 0) or ((tick % 100) == 0):
                 if tack:
                     self.hardwareif.set_led_green(1)
                     self.hardwareif.set_led_blue(0)
@@ -218,6 +222,15 @@ class run_robot_caliblate_mode():
         self.ndeg_ofsts[1, leg] = leg_val
         self.ndeg_ofsts[2, leg] = knee_val
         return mode_exit
+
+
+    def all_servo_neutral_signal(self):
+        degree = 0
+        for leg in range(0,4):
+            for axis in range(0,3):
+                self.set_actuator(degree, axis, leg)
+                time.sleep(0.5)
+
 
 if __name__ == '__main__':
     config = Configuration()
