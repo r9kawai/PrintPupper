@@ -54,9 +54,9 @@ class Configuration:
         self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.13
+        self.max_x_velocity = 0.125
         self.max_y_velocity = 0.08
-        self.max_yaw_rate = 1.1
+        self.max_yaw_rate = 0.75
         self.max_pitch = 12.5 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
@@ -68,7 +68,7 @@ class Configuration:
         self.max_pitch_rate = 0.1
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
         self.yaw_time_constant = 0.5
-        self.max_stance_yaw = 0.6
+        self.max_stance_yaw = 0.3
         self.max_stance_yaw_rate = 1.0
 
         #################### SWING ######################
@@ -89,10 +89,10 @@ class Configuration:
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.00  # duration of the phase where all four feet are on the ground
+            0.30  # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.40  # duration of the phase when only two feet are on the ground 
+            0.18  # duration of the phase when only two feet are on the ground 
         )
 
         ######################## GEOMETRY ######################
@@ -112,9 +112,9 @@ class Configuration:
         self.delta_x = self.LEG_FB
         self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET
         self.x_shift = 0.000
-        self.default_z_ref = -0.14142
-        self.min_z_ref = self.default_z_ref - 0.040
-        self.max_z_ref = self.default_z_ref + 0.040
+        self.default_z_ref = -0.141 - (self.z_clearance / 2)
+        self.min_z_ref = self.default_z_ref - 0.000
+        self.max_z_ref = self.default_z_ref + 0.000
 
         self.LEG_ORIGINS = np.array(
             [
