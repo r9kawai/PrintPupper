@@ -13,7 +13,7 @@ outpath = './exportSTEP/'
 bodylabel_exname_list = [
     ['print_knee_horn',        '01_print_knee_horn_4pcs',     'Y',  1],
     ['print_upper_leg',        '02_print_upper_leg_4pcs',     'Y',  1],
-    ['print_knee_linkage',     '03_print_knee_linkage_4pcs',  'Y', -1],
+    ['print_knee_linkage',     '03_print_knee_linkage_4pcs',  'Y',  1],
     ['print_lower_leg2_L',     '04_print_lower_leg_L_2pcs',   'Y',  1],
     ['print_lower_leg2_R',     '05_print_lower_leg_R_2pcs',   'Y', -1],
     ['print_lower_leg_cap',    '06_print_lower_leg_cap_4pcs', 'Y',  1],
