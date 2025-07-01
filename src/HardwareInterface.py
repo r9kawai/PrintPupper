@@ -1,4 +1,5 @@
 import math
+import numpy as np
 import pigpio
 import RPi.GPIO as GPIO
 from Config import Configuration, ServoParams, PWMParams
@@ -23,6 +24,7 @@ class HardwareInterface:
         self.servo_params = ServoParams()
         self.initialize_pwm()
         self.culk = compute_unparallel_link_knee(self.config)
+        self.compute_normal_kneeX = np.zeros(4)
         return
 
     def set_actuator_postions(self, joint_angles):
@@ -114,9 +116,14 @@ class HardwareInterface:
                 mirror = False
             kneeX = self.culk.compute(leg, knee, mirror)
 
+            # 安全機構 非平行リンク機構に起因する計算不能（逆運動学上で届かない座標点）発生時に、
+            # サーボを誤動作させないために前フレームの正常値で角度指示する
             if math.isnan(kneeX):
                 debug = True
+                kneeX = self.compute_normal_kneeX[leg_index]
                 print("compute Err!")
+            else:
+                self.compute_normal_kneeX[leg_index] = kneeX
 
             if debug:
                 print(f"LEG{leg_index} : coxa {coxa:+07.2f}({math.degrees(coxa):+07.2f}), ", end="")
@@ -163,49 +170,3 @@ class HardwareInterface:
     def set_led_blue(self, onoff):
         GPIO.output(LED_BLUE_GPIO, onoff)
         return
-
-    """Converts a pwm signal (measured in microseconds) to a corresponding duty cycle on the gpio pwm pin
-def pwm_to_duty_cycle(pulsewidth_micros, pwm_params):
-
-    Parameters
-    ----------
-    pulsewidth_micros : float
-        Width of the pwm signal in microseconds
-    pwm_params : PWMParams
-        PWMParams object
-
-    Returns
-    -------
-    float
-        PWM duty cycle corresponding to the pulse width
-    return int(pulsewidth_micros / 1e6 * pwm_params.freq * pwm_params.range)
-    """
-
-    """Converts a desired servo angle into the corresponding PWM command
-def angle_to_pwm(angle, servo_params, axis_index, leg_index):
-
-    Parameters
-    ----------
-    angle : float
-        Desired servo angle, relative to the vertical (z) axis
-    servo_params : ServoParams
-        ServoParams object
-    axis_index : int
-        Specifies which joint of leg to control. 0 is abduction servo, 1 is inner hip servo, 2 is outer hip servo.
-    leg_index : int
-        Specifies which leg to control. 0 is front-right, 1 is front-left, 2 is back-right, 3 is back-left.
-
-    Returns
-    -------
-    float
-        PWM width in microseconds
-    angle_deviation = (
-        angle - servo_params.neutral_angles[axis_index, leg_index]
-    ) * servo_params.servo_multipliers[axis_index, leg_index]
-    pulse_width_micros = (
-        servo_params.neutral_position_pwm
-        + servo_params.micros_per_rad * angle_deviation
-    )
-    return pulse_width_micros
-    """
-

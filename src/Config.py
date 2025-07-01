@@ -57,7 +57,7 @@ class Configuration:
         self.max_x_velocity = 0.125
         self.max_y_velocity = 0.08
         self.max_yaw_rate = 0.75
-        self.max_pitch = 12.5 * np.pi / 180.0
+        self.max_pitch = 10 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
         self.z_time_constant = 0.02
@@ -101,9 +101,9 @@ class Configuration:
         self.ABDUCTION_OFFSET = 0.043   # distance from abduction axis to leg
 
         self.LEG_L1 = 0.100
-        self.LEG_L2 = 0.100
+        self.LEG_L2 = 0.120
         self.LEG_UNPRALLEL_L3 = 0.050
-        self.LEG_UNPRALLEL_L4 = 0.050
+        self.LEG_UNPRALLEL_L4 = 0.070
         self.LEG_UNPRALLEL_L5 = 0.080
         self.UNPRALLEL_ofstX = -0.005
         self.UNPRALLEL_ofstY =  0.025
@@ -111,10 +111,10 @@ class Configuration:
         #################### STANCE ####################
         self.delta_x = self.LEG_FB
         self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET
-        self.x_shift = 0.000
-        self.default_z_ref = -0.141 - (self.z_clearance / 2)
-        self.min_z_ref = self.default_z_ref - 0.000
-        self.max_z_ref = self.default_z_ref + 0.000
+        self.x_shift = 0.020
+        self.default_z_ref = -0.155
+        self.min_z_ref = self.default_z_ref
+        self.max_z_ref = self.default_z_ref + 0.030
 
         self.LEG_ORIGINS = np.array(
             [
