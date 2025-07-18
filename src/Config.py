@@ -54,9 +54,9 @@ class Configuration:
         self.ps4_torot_color = PS4_TOROT_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.125
-        self.max_y_velocity = 0.08
-        self.max_yaw_rate = 0.75
+        self.max_x_velocity = 0.3
+        self.max_y_velocity = 0.15
+        self.max_yaw_rate = 1.0
         self.max_pitch = 10 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
@@ -73,12 +73,12 @@ class Configuration:
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.030
+        self.z_clearance = 0.045
         self.alpha = (
-            0.5  # Ratio between touchdown distance and total horizontal stance movement
+            0.55  # Ratio between touchdown distance and total horizontal stance movement
         )
         self.beta = (
-            0.5  # Ratio between touchdown distance and total horizontal stance movement
+            0.45  # Ratio between touchdown distance and total horizontal stance movement
         )
 
         #################### GAIT #######################
@@ -89,16 +89,17 @@ class Configuration:
             [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
         )
         self.overlap_time = (
-            0.280  # duration of the phase where all four feet are on the ground
+            0.14   # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.140  # duration of the phase when only two feet are on the ground 
+            0.22  # duration of the phase when only two feet are on the ground 
         )
 
         ######################## GEOMETRY ######################
         self.LEG_FB = 0.100             # front-back distance from center line to leg axis
         self.LEG_LR = 0.045             # left-right distance from center line to leg plane
         self.ABDUCTION_OFFSET = 0.043   # distance from abduction axis to leg
+        self.LEG_OPENING = 0.020        # distance from directly below to the open leg
 
         self.LEG_L1 = 0.100
         self.LEG_L2 = 0.120
@@ -110,9 +111,9 @@ class Configuration:
 
         #################### STANCE ####################
         self.delta_x = self.LEG_FB
-        self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET
-        self.x_shift = 0.020
-        self.default_z_ref = -0.155
+        self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET + self.LEG_OPENING
+        self.x_shift = 0.010
+        self.default_z_ref = -0.170
         self.min_z_ref = self.default_z_ref
         self.max_z_ref = self.default_z_ref + 0.030
 
