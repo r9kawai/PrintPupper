@@ -17,7 +17,7 @@ def main(use_imu=False):
 
     # Create config
     config = Configuration()
-    hardware_interface = HardwareInterface()
+    hardware_interface = HardwareInterface(config)
 
     # Create imu handle
     if use_imu:
@@ -106,7 +106,7 @@ def main(use_imu=False):
             controller.run(state, command)
 
             # Update the pwm widths going to the servos
-            hardware_interface.set_actuator_postions(state.joint_angles)
+            hardware_interface.set_actuator_positions(state.joint_angles)
 
             # cycle tune
             t_time = time.time()

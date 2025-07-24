@@ -2,14 +2,24 @@ import math
 import numpy as np
 import pigpio
 import RPi.GPIO as GPIO
-from Config import Configuration, ServoParams, PWMParams
+from Config import ServoParams, PWMParams
 from compute_unparallel_link_knee import compute_unparallel_link_knee
 
 LED_GREEN_GPIO = 0
 LED_BLUE_GPIO = 1
 
+class DummyPigpio:
+   def set_PWM_frequency(self, user_gpio, frequency):
+       return int(0)
+   
+   def set_PWM_range(self, user_gpio, range_):
+       return int(0)
+   
+   def set_PWM_dutycycle(self, user_gpio, dutycycle):
+       return int(0)
+
 class HardwareInterface:
-    def __init__(self):
+    def __init__(self, config):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(LED_GREEN_GPIO, GPIO.OUT)
         GPIO.setup(LED_BLUE_GPIO, GPIO.OUT)
@@ -18,8 +28,9 @@ class HardwareInterface:
         print('GPIO LED GREEN [ ', LED_GREEN_GPIO, 'pin ]', sep='')
         print('GPIO LED BLUE  [ ', LED_BLUE_GPIO, 'pin ]', sep='')
 
-        self.config = Configuration()
-        self.pi = pigpio.pi()
+        self.config = config
+        self.pigpio = pigpio.pi()
+        # self.pigpio = DummyPigpio()    # for debug run
         self.pwm_params = PWMParams()
         self.servo_params = ServoParams()
         self.initialize_pwm()
@@ -27,7 +38,8 @@ class HardwareInterface:
         self.compute_normal_kneeX = np.zeros(4)
         return
 
-    def set_actuator_postions(self, joint_angles):
+    def set_actuator_positions(self, joint_angles):
+        self.extrapolation_unparallel_actuator_positions(joint_angles)
         self.send_servo_commands(joint_angles)
         return
 
@@ -55,10 +67,8 @@ class HardwareInterface:
             if leg_index == 3:
                 print('GPIO BL-[ ', end='')
             for axis_index in range(3):
-                self.pi.set_PWM_frequency(
-                    self.pwm_params.pins[axis_index, leg_index], self.servo_params.pwm_freq
-                )
-                self.pi.set_PWM_range(self.pwm_params.pins[axis_index, leg_index], self.servo_params.pwm_usec_range)
+                self.pigpio.set_PWM_frequency(self.pwm_params.pins[axis_index, leg_index], self.servo_params.pwm_freq)
+                self.pigpio.set_PWM_range(self.pwm_params.pins[axis_index, leg_index], self.servo_params.pwm_usec_range)
                 print('{:02d}'.format(self.pwm_params.pins[axis_index, leg_index]), 'pin ', sep='', end='')
             print(']')
         return
@@ -66,7 +76,7 @@ class HardwareInterface:
     def deactivate_servos(self):
         for leg_index in range(4):
             for axis_index in range(3):
-                self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], 0)
+                self.pigpio.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], 0)
         return
 
     def angle_to_pwmdutycycle(self, angle, axis_index, leg_index):
@@ -86,20 +96,35 @@ class HardwareInterface:
 
     def send_servo_command(self, joint_angle, axis, leg):
         duty_cycle = self.angle_to_pwmdutycycle(joint_angle, axis, leg)
-        self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
+        self.pigpio.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
         return
 
     def send_servo_command_noncab(self, joint_angle, axis, leg):
         duty_cycle = self.angle_to_pwmdutycycle_noncab(joint_angle, axis, leg)
-        self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
+        self.pigpio.set_PWM_dutycycle(self.pwm_params.pins[axis, leg], duty_cycle)
         return
 
     def send_servo_commands(self, joint_angles):
-        debug = False
-
         for leg_index in range(4):
-            # 非平行リンク機構の導入による改修 ------------------------------------------------------------------------
-            # amend for PrintPupper v0.2's unparallel link mechanism
+            for axis_index in range(3):
+                angle = joint_angles[axis_index, leg_index]
+                duty_cycle = self.angle_to_pwmdutycycle(angle, axis_index, leg_index)
+                self.pigpio.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], duty_cycle)
+        return
+
+    def set_led_green(self, onoff):
+        GPIO.output(LED_GREEN_GPIO, onoff)
+        return
+
+    def set_led_blue(self, onoff):
+        GPIO.output(LED_BLUE_GPIO, onoff)
+        return
+
+    # 非平行リンク機構の導入 ------------------------------------------------------------------------
+    # for PrintPupper v0.2's unparallel link mechanism
+    def extrapolation_unparallel_actuator_positions(self, joint_angles):
+        debug = False
+        for leg_index in range(4):
             rad0 = joint_angles[0, leg_index] * self.servo_params.servo_multipliers[0, leg_index]
             rad1 = joint_angles[1, leg_index] * self.servo_params.servo_multipliers[1, leg_index]
             rad2 = joint_angles[2, leg_index] * self.servo_params.servo_multipliers[2, leg_index]
@@ -133,40 +158,6 @@ class HardwareInterface:
                 if leg_index == 3:
                         print("")
 
-            # 再計算結果 knee 角度指示に戻す
+            # 再計算結果 knee 角度を指示行列に戻す
             joint_angles[2, leg_index] = kneeX * self.servo_params.servo_multipliers[2, leg_index]
-            # ---------------------------------------------------------------------------------------------------------
-
-            for axis_index in range(3):
-                angle = joint_angles[axis_index, leg_index]
-                duty_cycle = self.angle_to_pwmdutycycle(angle, axis_index, leg_index)
-                self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], duty_cycle)
-        return
-
-    def send_servo_commands_dbg(self, joint_angles):
-        for leg_index in range(4):
-            if leg_index == 0:
-                print('FR-[ ', end='')
-            if leg_index == 1:
-                print('FL-[ ', end='')
-            if leg_index == 2:
-                print('BR-[ ', end='')
-            if leg_index == 3:
-                print('BL-[ ', end='')
-            for axis_index in range(3):
-                angle = joint_angles[axis_index, leg_index]
-#               duty_cycle = self.angle_to_duty_cycle(angle, axis_index, leg_index)
-                duty_cycle = self.angle_to_pwmdutycycle(angle, axis_index, leg_index)
-                self.pi.set_PWM_dutycycle(self.pwm_params.pins[axis_index, leg_index], duty_cycle)
-                print('{:04d}'.format(duty_cycle), end=' ')
-            print('] ', end='')
-        print('')
-        return
-
-    def set_led_green(self, onoff):
-        GPIO.output(LED_GREEN_GPIO, onoff)
-        return
-
-    def set_led_blue(self, onoff):
-        GPIO.output(LED_BLUE_GPIO, onoff)
         return

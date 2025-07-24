@@ -72,10 +72,11 @@ class Configuration:
         self.x_shift = 0.005
         self.default_z_ref = -0.165
         self.min_z_ref = self.default_z_ref
-        self.max_z_ref = self.default_z_ref + 0.030
+        self.max_z_ref = self.default_z_ref + 0.040
 
         #################### COMMANDS ####################
         self.max_x_velocity = 0.32
+        self.max_x_velocity_minus = 0.16
         self.max_y_velocity = 0.12
         self.max_yaw_rate = 1.0
         self.max_pitch = 10 * np.pi / 180.0
