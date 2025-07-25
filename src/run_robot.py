@@ -34,22 +34,15 @@ def main(use_imu=False):
     joystick_interface = JoystickInterface(config)
     print("Done.")
 
-    last_loop_time = time.time()
-
-    print("Summary of gait parameters:")
-    print("overlap time: ", config.overlap_time)
-    print("swing time: ", config.swing_time)
-    print("z clearance: ", config.z_clearance)
-    print("x shift: ", config.x_shift)
-
     # Wait until the activate button has been pressed
     joystick_interface.set_color(config.ps4_deactivated_color)
+    last_loop_time = time.time()
     while True:
         wait_loop = 0
         led_blink = 0
 
         print("Waiting for L1 to activate robot.")
-        print(hardware_interface.servo_params.neutral_angle_degrees)
+        #print(hardware_interface.servo_params.neutral_angle_degrees)
         wait_loop_first = False
         while True:
             if (wait_loop % (25 if wait_loop_first else 100)) == 0:
