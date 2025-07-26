@@ -140,7 +140,15 @@ class JoystickInterface:
             message_rate = msg["message_rate"]
             message_dt = 1.0 / message_rate
 
-            if now_trot:
+            height_movement = msg["dpady"]
+            command.height = state.height - message_dt * self.config.z_speed * height_movement
+            command.height = max(self.config.min_z_ref, min(command.height, self.config.max_z_ref))
+            down_speed = abs(command.height - self.config.default_z_ref) > self.config.z_delta_as_down_speed
+            if down_speed:
+                command.horizontal_velocity *= self.config.z_delta_as_down_speed_rate
+                command.yaw_rate *= self.config.z_delta_as_down_speed_rate
+
+            if now_trot or down_speed:
                 max_pitch_ = self.config.max_pitch_as_trot
             else:
                 max_pitch_ = self.config.max_pitch
@@ -158,14 +166,6 @@ class JoystickInterface:
                 self.config.pitch_time_constant,
             )
             command.pitch = state.pitch + message_dt * pitch_rate
-
-            height_movement = msg["dpady"]
-            command.height = state.height - message_dt * self.config.z_speed * height_movement
-            command.height = max(self.config.min_z_ref, min(command.height, self.config.max_z_ref))
-            if abs(command.height - self.config.default_z_ref) > self.config.z_delta_as_down_speed:
-                command.horizontal_velocity *= self.config.z_delta_as_down_speed_rate
-                command.yaw_rate *= self.config.z_delta_as_down_speed_rate
-
 
             # Roll control is canceled
             # roll_movement = - msg["dpadx"]

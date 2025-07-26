@@ -75,7 +75,7 @@ class Configuration:
         self.min_z_ref = self.default_z_ref
         self.max_z_ref = self.default_z_ref + 0.050
         self.z_delta_as_down_speed = 0.020
-        self.z_delta_as_down_speed_rate = 0.3
+        self.z_delta_as_down_speed_rate = 0.4
 
         #################### COMMANDS ####################
         self.max_x_velocity = 0.30
@@ -83,7 +83,7 @@ class Configuration:
         self.max_y_velocity = 0.12
         self.max_yaw_rate = 1.0
         self.max_pitch = 25 * np.pi / 180.0
-        self.max_pitch_as_trot = 5 * np.pi / 180.0
+        self.max_pitch_as_trot = 7 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
         self.z_time_constant = 0.02
