@@ -1,5 +1,5 @@
 #!/bin/sh
-echo Entry robot.service and joystick.service ...
+echo "Entry robot.service and joystick.service..."
 sudo rm /etc/systemd/system/joystick.service
 sudo ln -s /home/pi/PrintPupper/src/PupperCommand/joystick.service /etc/systemd/system/joystick.service
 sudo rm /etc/systemd/system/robot.service
@@ -11,4 +11,4 @@ systemctl start joystick
 systemctl start robot
 systemctl status joystick
 systemctl status robot
-echo ...done
+echo "...done"
