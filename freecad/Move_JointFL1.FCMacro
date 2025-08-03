@@ -1,0 +1,26 @@
+import time
+import math
+import FreeCAD as App
+import FreeCADGui as Gui
+
+targetName = "JointFL1"
+print(targetName, "animation...")
+
+joint = App.ActiveDocument.getObjectsByLabel(targetName)[0]
+
+if joint is None:
+    raise ValueError(joint + " not fount")
+
+angles = [0] + list(range(0, -40, -10)) + list(range(-40, 40, 10)) + list(range(40, 0, -10)) + [0]
+
+for angle in angles:
+    print(angle)
+    angle_rad = math.radians(angle)
+    joint.Offset1.Rotation.Angle = angle_rad
+    App.ActiveDocument.recompute()
+    time.sleep(0.01)
+    Gui.updateGui()
+
+joint.Offset1 = App.Placement()
+
+print(targetName, "animation...done")

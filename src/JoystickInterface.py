@@ -126,7 +126,10 @@ class JoystickInterface:
             self.previous_activate_toggle = activate_toggle
 
             ####### Handle continuous commands ########
-            x_vel = msg_val_ly * self.config.max_x_velocity
+            if msg_val_ly < 0:
+                x_vel = msg_val_ly * self.config.max_x_velocity_minus
+            else:
+                x_vel = msg_val_ly * self.config.max_x_velocity
             y_vel = msg_val_lx * -self.config.max_y_velocity
             command.horizontal_velocity = np.array([x_vel, y_vel])
             if self.rx_ry_switch:
@@ -137,10 +140,22 @@ class JoystickInterface:
             message_rate = msg["message_rate"]
             message_dt = 1.0 / message_rate
 
-            if self.rx_ry_switch:
-                pitch =  (msg_val_rx + self.config.pitch_gain) * self.config.max_pitch
+            height_movement = msg["dpady"]
+            command.height = state.height - message_dt * self.config.z_speed * height_movement
+            command.height = max(self.config.min_z_ref, min(command.height, self.config.max_z_ref))
+            down_speed = abs(command.height - self.config.default_z_ref) > self.config.z_delta_as_down_speed
+            if down_speed:
+                command.horizontal_velocity *= self.config.z_delta_as_down_speed_rate
+                command.yaw_rate *= self.config.z_delta_as_down_speed_rate
+
+            if now_trot or down_speed:
+                max_pitch_ = self.config.max_pitch_as_trot
             else:
-                pitch = ((msg_val_ry + self.config.pitch_gain) * -1) * self.config.max_pitch
+                max_pitch_ = self.config.max_pitch
+            if self.rx_ry_switch:
+                pitch =  (msg_val_rx + self.config.pitch_gain) * max_pitch_
+            else:
+                pitch = ((msg_val_ry + self.config.pitch_gain) * -1) * max_pitch_
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )
@@ -151,10 +166,6 @@ class JoystickInterface:
                 self.config.pitch_time_constant,
             )
             command.pitch = state.pitch + message_dt * pitch_rate
-
-            height_movement = msg["dpady"]
-            command.height = state.height - message_dt * self.config.z_speed * height_movement
-            command.height = max(self.config.min_z_ref, min(command.height, self.config.max_z_ref))
 
             # Roll control is canceled
             # roll_movement = - msg["dpadx"]

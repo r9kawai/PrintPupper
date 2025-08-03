@@ -60,7 +60,7 @@ class run_robot_caliblate_mode():
         self.blink_fast = False
         mode_exit = False
         while True:
-            for leg in range(4):
+            for leg in [1, 3, 0, 2]:
                 mode_exit = self.caliblate_leg(leg)
                 if mode_exit:
                     break
@@ -178,6 +178,8 @@ class run_robot_caliblate_mode():
 
         mode_exit = False
         btn = 0
+        updown_rv = [1, -1, 1, -1]
+        knee_updown_rv = updown_rv[leg]
         while True:
             try:
                 btn = self.mode_btn_que.get(timeout=0.1)
@@ -197,10 +199,10 @@ class run_robot_caliblate_mode():
                 leg_val -= 0.5
 
             if btn == Btn.KNEE_UP:
-                knee_val += 0.5
+                knee_val += (0.5 * knee_updown_rv)
 
             if btn == Btn.KNEE_DOWN:
-                knee_val -= 0.5
+                knee_val -= (0.5 * knee_updown_rv)
 
             print(f"Sv1 Hip={hip_val} / Sv2 Leg={leg_val} / Sv3 Knee={knee_val}")
             self.set_actuator(hip_val, 0, leg)
