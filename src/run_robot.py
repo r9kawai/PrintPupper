@@ -59,7 +59,9 @@ def main(use_imu=False):
                 break
             if command.caliblate_mode_event:
                 command.caliblate_mode_event = False
+                joystick_interface.set_color(config.ps4_calibration_color)
                 run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
+                joystick_interface.set_color(config.ps4_deactivated_color)
                 sys.exit()
             time.sleep(0.01)
 

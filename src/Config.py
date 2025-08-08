@@ -1,6 +1,5 @@
 import numpy as np
 from ServoCalibration import NEUTRAL_ANGLE_DEGREES
-from HardwareConfig import PS4_DEACTIVATED_COLOR, PS4_ACTIVATED_COLOR, PS4_TOROT_COLOR
 from enum import Enum
 
 # TODO: put these somewhere else
@@ -48,9 +47,10 @@ class ServoParams:
 class Configuration:
     def __init__(self):
         ################# CONTROLLER BASE COLOR ##############
-        self.ps4_activated_color = PS4_ACTIVATED_COLOR
-        self.ps4_deactivated_color = PS4_DEACTIVATED_COLOR
-        self.ps4_torot_color = PS4_TOROT_COLOR
+        self.ps4_deactivated_color = {"red": 255, "blue": 0, "green": 0}
+        self.ps4_activated_color = {"red": 0, "blue": 0, "green": 255}
+        self.ps4_torot_color = {"red": 0, "blue": 255, "green": 0}
+        self.ps4_calibration_color = {"red": 255, "blue": 0, "green": 255}
 
         ######################## GEOMETRY ######################
         self.LEG_FB = 0.100             # front-back distance from center line to leg axis
