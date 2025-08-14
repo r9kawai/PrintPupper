@@ -1,5 +1,5 @@
 import numpy as np
-
+from Config import Configuration
 
 class Command:
     """Stores movement command
@@ -8,7 +8,8 @@ class Command:
     def __init__(self):
         self.horizontal_velocity = np.array([0, 0])
         self.yaw_rate = 0.0
-        self.height = -0.15
+        _config = Configuration()
+        self.height = _config.default_z_ref
         self.pitch = 0.0
         self.roll = 0.0
         self.activation = 0

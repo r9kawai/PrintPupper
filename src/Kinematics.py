@@ -63,7 +63,12 @@ def leg_explicit_inverse_kinematics(r_body_foot, leg_index, config):
     beta = np.arccos(arccos_argument)
 
     # Angle of the second link relative to the tilted negative z axis
-    knee_angle = hip_angle - (np.pi - beta)
+
+    # original
+    #knee_angle = hip_angle - (np.pi - beta)
+    #
+    # for PrintPupper v0.2
+    knee_angle = beta
 
     return np.array([abduction_angle, hip_angle, knee_angle])
 

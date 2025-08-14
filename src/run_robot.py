@@ -9,7 +9,7 @@ from HardwareInterface import HardwareInterface
 from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
 from State import BehaviorState, State
-from run_robot_caliblate_mode import run_robot_caliblate_mode
+from run_robot_caliblate_mode_2 import run_robot_caliblate_mode
 
 def main(use_imu=False):
     """Main program
@@ -17,7 +17,7 @@ def main(use_imu=False):
 
     # Create config
     config = Configuration()
-    hardware_interface = HardwareInterface()
+    hardware_interface = HardwareInterface(config)
 
     # Create imu handle
     if use_imu:
@@ -34,22 +34,15 @@ def main(use_imu=False):
     joystick_interface = JoystickInterface(config)
     print("Done.")
 
-    last_loop_time = time.time()
-
-    print("Summary of gait parameters:")
-    print("overlap time: ", config.overlap_time)
-    print("swing time: ", config.swing_time)
-    print("z clearance: ", config.z_clearance)
-    print("x shift: ", config.x_shift)
-
     # Wait until the activate button has been pressed
     joystick_interface.set_color(config.ps4_deactivated_color)
+    last_loop_time = time.time()
     while True:
         wait_loop = 0
         led_blink = 0
 
         print("Waiting for L1 to activate robot.")
-        print(hardware_interface.servo_params.neutral_angle_degrees)
+        #print(hardware_interface.servo_params.neutral_angle_degrees)
         wait_loop_first = False
         while True:
             if (wait_loop % (25 if wait_loop_first else 100)) == 0:
@@ -66,7 +59,9 @@ def main(use_imu=False):
                 break
             if command.caliblate_mode_event:
                 command.caliblate_mode_event = False
+                joystick_interface.set_color(config.ps4_calibration_color)
                 run_robot_caliblate_mode(config, hardware_interface, joystick_interface)
+                joystick_interface.set_color(config.ps4_deactivated_color)
                 sys.exit()
             time.sleep(0.01)
 
@@ -106,7 +101,7 @@ def main(use_imu=False):
             controller.run(state, command)
 
             # Update the pwm widths going to the servos
-            hardware_interface.set_actuator_postions(state.joint_angles)
+            hardware_interface.set_actuator_positions(state.joint_angles)
 
             # cycle tune
             t_time = time.time()
