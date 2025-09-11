@@ -8,7 +8,7 @@ from State import State
 from HardwareInterface import HardwareInterface
 from Config import Configuration
 from Kinematics import four_legs_inverse_kinematics
-from State import BehaviorState, State
+from State import RState, State
 from run_robot_caliblate_mode_2 import run_robot_caliblate_mode
 
 def main(use_imu=False):
@@ -77,12 +77,12 @@ def main(use_imu=False):
                 print("Deactivating Robot")
                 # hardware_interface.deactivate()
                 joystick_interface.set_color(config.ps4_deactivated_color)
-                state.behavior_state = BehaviorState.REST
+                state.behavior_state = RState.REST
                 hardware_interface.set_led_blue(False)
                 break
 
             if command.trot_event:
-                if state.behavior_state == BehaviorState.REST:
+                if state.behavior_state == RState.REST:
                     joystick_interface.set_color(config.ps4_torot_color)
                     hardware_interface.set_led_blue(True)
                     #print("Robot start torot")
