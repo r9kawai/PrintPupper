@@ -12,17 +12,13 @@ class State:
         self.roll = 0.0
         self.activation = 0
         self.behavior_state = RState.REST
-
         self.ticks = 0
         self.foot_locations = np.zeros((3, 4))
         self.joint_angles = np.zeros((3, 4))
-
-        self.behavior_state = RState.REST
-
+        self.quat_orientation = np.array([1, 0, 0, 0])
 
 class RState(Enum):
-    DEACTIVATED = -1
+    DEACT = -1
     REST = 0
     TROT = 1
     HANDS = 2
-    HANDS_DONE = 3

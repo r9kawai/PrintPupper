@@ -9,7 +9,6 @@ from transforms3d.euler import euler2mat, quat2euler
 from transforms3d.quaternions import qconjugate, quat2axangle
 from transforms3d.axangles import axangle2mat
 
-
 class Controller:
     """Controller and planner object
     """
@@ -29,10 +28,9 @@ class Controller:
         self.swing_controller = SwingController(self.config)
         self.stance_controller = StanceController(self.config)
 
-        self.hands_transition_mapping = {RState.REST: RState.HANDS, RState.HANDS: RState.HANDS_DONE, RState.HANDS_DONE: RState.REST, RState.TROT: RState.HANDS}
-        self.trot_transition_mapping = {RState.REST: RState.TROT, RState.TROT: RState.REST, RState.HANDS: RState.TROT, RState.HANDS_DONE: RState.TROT}
-        self.activate_transition_mapping = {RState.DEACTIVATED: RState.REST, RState.REST: RState.DEACTIVATED}
-
+        self.activate_transition_mapping =  {RState.DEACT:RState.REST,  RState.REST:RState.DEACT, RState.TROT:RState.TROT, RState.HANDS:RState.HANDS}
+        self.trot_transition_mapping =      {RState.DEACT:RState.DEACT, RState.REST:RState.TROT,  RState.TROT:RState.REST, RState.HANDS:RState.HANDS}
+        self.hands_transition_mapping =     {RState.DEACT:RState.DEACT, RState.REST:RState.HANDS, RState.TROT:RState.TROT, RState.HANDS:RState.REST}
 
     def step_gait(self, state, command):
         """Calculate the desired foot locations for the next timestep
@@ -110,33 +108,9 @@ class Controller:
 
         elif state.behavior_state == RState.HANDS:
             new_foot_locations = self.set_pose_to_rest(state, command)
-            new_foot_locations[0][0] += 0.120
-            new_foot_locations[2][0] += 0.060
+            new_foot_locations[0][1] += 0.120   # X, FL forward 120mm
+            new_foot_locations[2][1] += 0.060   # Z, FL Up 60mm
             state.joint_angles = self.inverse_kinematics(new_foot_locations, self.config)
-            '''
-            state.foot_locations = (
-                self.config.default_stance
-                + np.array([0, 0, -0.09])[:, np.newaxis]
-            )
-            state.joint_angles = self.inverse_kinematics(
-                state.foot_locations, self.config
-            )
-            '''
-
-        elif state.behavior_state == RState.HANDS_DONE:
-            new_foot_locations = self.set_pose_to_rest(state, command)
-            new_foot_locations[0][0] += 0.090
-            new_foot_locations[2][0] += 0.030
-            state.joint_angles = self.inverse_kinematics(new_foot_locations, self.config)
-            '''
-            state.foot_locations = (
-                self.config.default_stance
-                + np.array([0, 0, -0.22])[:, np.newaxis]
-            )
-            state.joint_angles = self.inverse_kinematics(
-                state.foot_locations, self.config
-            )
-            '''
 
         elif state.behavior_state == RState.REST:
             new_foot_locations = self.set_pose_to_rest(state, command)

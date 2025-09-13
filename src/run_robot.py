@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import time
-from IMU import IMU
 from Controller import Controller
 from JoystickInterface import JoystickInterface
 from State import State
@@ -12,17 +11,9 @@ from State import RState, State
 from run_robot_caliblate_mode_2 import run_robot_caliblate_mode
 
 def main(use_imu=False):
-    """Main program
-    """
-
     # Create config
     config = Configuration()
     hardware_interface = HardwareInterface(config)
-
-    # Create imu handle
-    if use_imu:
-        imu = IMU(port="/dev/ttyACM0")
-        imu.flush_buffer()
 
     # Create controller and user input handles
     controller = Controller(
@@ -30,7 +21,7 @@ def main(use_imu=False):
         four_legs_inverse_kinematics,
     )
     state = State()
-    print("Creating joystick listener...")
+    print("Creating joystick listener...", end="")
     joystick_interface = JoystickInterface(config)
     print("Done.")
 
@@ -41,8 +32,7 @@ def main(use_imu=False):
         wait_loop = 0
         led_blink = 0
 
-        print("Waiting for L1 to activate robot.")
-        #print(hardware_interface.servo_params.neutral_angle_degrees)
+        print("Robot Waiting L1 button to activate robot")
         wait_loop_first = False
         while True:
             if (wait_loop % (25 if wait_loop_first else 100)) == 0:
@@ -65,7 +55,7 @@ def main(use_imu=False):
                 sys.exit()
             time.sleep(0.01)
 
-        print("Robot activated.")
+        print("Robot Activate")
         hardware_interface.set_led_green(True)
         joystick_interface.set_color(config.ps4_activated_color)
         while True:
@@ -73,29 +63,10 @@ def main(use_imu=False):
 
             # Parse the udp joystick commands and then update the robot controller's parameters
             command = joystick_interface.get_command(state)
-            if command.activate_event == 1:
-                print("Deactivating Robot")
-                # hardware_interface.deactivate()
-                joystick_interface.set_color(config.ps4_deactivated_color)
-                state.behavior_state = RState.REST
-                hardware_interface.set_led_blue(False)
+
+            # Update PS4 Joystick LED, Update Onboard LED, Exit(to Deactivate) check
+            if update_leds_loop_exit(config, state, command, hardware_interface, joystick_interface):
                 break
-
-            if command.trot_event:
-                if state.behavior_state == RState.REST:
-                    joystick_interface.set_color(config.ps4_torot_color)
-                    hardware_interface.set_led_blue(True)
-                    #print("Robot start torot")
-                else:
-                    joystick_interface.set_color(config.ps4_activated_color)
-                    hardware_interface.set_led_blue(False)
-                    #print("Robot stop torot")
-
-            # Read imu data. Orientation will be None if no data was available
-            quat_orientation = (
-                imu.read_orientation() if use_imu else np.array([1, 0, 0, 0])
-            )
-            state.quat_orientation = quat_orientation
 
             # Step the controller forward by dt
             controller.run(state, command)
@@ -111,5 +82,25 @@ def main(use_imu=False):
             if (dt_dt > 0) and (dt_dt >= config.dt_min_sleep):
                 time.sleep(dt_dt)
 
+def update_leds_loop_exit(config, state, command, hardware_interface, joystick_interface):
+    if command.activate_event:
+        if state.behavior_state == RState.REST:
+            print("Robot Deactivate")
+            joystick_interface.set_color(config.ps4_deactivated_color)
+            hardware_interface.set_led_blue(False)
+            return True
 
-main()
+    if command.trot_event:
+        if state.behavior_state == RState.REST:
+            joystick_interface.set_color(config.ps4_torot_color)
+            hardware_interface.set_led_blue(True)
+            print("Robot start Torot")
+        else:
+            joystick_interface.set_color(config.ps4_activated_color)
+            hardware_interface.set_led_blue(False)
+            print("Robot stop Torot")
+
+    return False
+
+if __name__ == "__main__":
+    main()

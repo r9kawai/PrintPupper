@@ -13,7 +13,6 @@ class JoystickInterface:
     ):
         self.config = config
         self.previous_gait_toggle = 0
-        self.previous_state = RState.REST
         self.previous_hands_toggle = 0
         self.previous_activate_toggle = 0
 
@@ -96,10 +95,10 @@ class JoystickInterface:
 
             if self.auto_trot and (not now_trot) and input_move_on:
                 gait_toggle = 1
-                #print('auto trot:On')
+                print('Robot auto trot On')
             elif self.auto_trot and now_trot and (not input_move_on) and (self.auto_trot_counter == 1):
                 gait_toggle = 1
-                #print('auto trot:Off')
+                print('Robot auto trot Off')
 
             # Check if requesting a state transition to trotting, or from trotting to resting
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
@@ -111,7 +110,6 @@ class JoystickInterface:
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
             if command.activate_event:
-                print("command.height reset.")
                 state.height = self.config.default_z_ref
 
             if msg["long_x"]:
