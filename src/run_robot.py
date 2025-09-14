@@ -84,14 +84,14 @@ def main(use_imu=False):
 
 def update_leds_loop_exit(config, state, command, hardware_interface, joystick_interface):
     if command.activate_event:
-        if state.behavior_state == RState.REST:
+        if state.now_state == RState.REST:
             print("Robot Deactivate")
             joystick_interface.set_color(config.ps4_deactivated_color)
             hardware_interface.set_led_blue(False)
             return True
 
     if command.trot_event:
-        if state.behavior_state == RState.REST:
+        if state.now_state == RState.REST:
             joystick_interface.set_color(config.ps4_torot_color)
             hardware_interface.set_led_blue(True)
             print("Robot start Torot")

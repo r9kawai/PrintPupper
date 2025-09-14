@@ -71,14 +71,15 @@ class Controller:
         """
 
         ########## Update operating state based on command ######
+        state.pre_state = state.now_state
         if command.activate_event:
-            state.behavior_state = self.activate_transition_mapping[state.behavior_state]
+            state.now_state = self.activate_transition_mapping[state.now_state]
         elif command.trot_event:
-            state.behavior_state = self.trot_transition_mapping[state.behavior_state]
+            state.now_state = self.trot_transition_mapping[state.now_state]
         elif command.hands_event:
-            state.behavior_state = self.hands_transition_mapping[state.behavior_state]
+            state.now_state = self.hands_transition_mapping[state.now_state]
 
-        if state.behavior_state == RState.TROT:
+        if state.now_state == RState.TROT:
             state.foot_locations, contact_modes = self.step_gait(
                 state,
                 command,
@@ -106,13 +107,20 @@ class Controller:
                 trot_rotated_foot_locations, self.config
             )
 
-        elif state.behavior_state == RState.HANDS:
-            new_foot_locations = self.set_pose_to_rest(state, command)
-            new_foot_locations[0][1] += 0.120   # X, FL forward 120mm
-            new_foot_locations[2][1] += 0.060   # Z, FL Up 60mm
-            state.joint_angles = self.inverse_kinematics(new_foot_locations, self.config)
+        elif state.now_state == RState.HANDS:
+            hands_foot_locations = self.set_pose_to_rest(state, command)
+            if state.pre_state == RState.REST:
+                self.hands_tick = int(0)
+                self.hands_ticks = int(0.5 / self.config.dt)
+                self.hand_dt = np.array([0.120, 0, 0.060]) / self.hands_ticks
 
-        elif state.behavior_state == RState.REST:
+            hands_foot_locations[:, 1] += (self.hand_dt * self.hands_tick)
+            state.joint_angles = self.inverse_kinematics(hands_foot_locations, self.config)
+
+            self.hands_tick += 1
+            self.hands_tick = min(self.hands_tick, self.hands_ticks - 1)
+
+        elif state.now_state == RState.REST:
             new_foot_locations = self.set_pose_to_rest(state, command)
             state.joint_angles = self.inverse_kinematics(new_foot_locations, self.config)
 

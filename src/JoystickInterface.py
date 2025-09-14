@@ -72,7 +72,7 @@ class JoystickInterface:
                     print('auto trot mode:Off')
 
             gait_toggle = msg["R1"]
-            now_trot = (state.behavior_state == RState.TROT)
+            now_trot = (state.now_state == RState.TROT)
             input_move_on = False
             msg_val_lx = float(msg["lx"])
             msg_val_ly = float(msg["ly"])
