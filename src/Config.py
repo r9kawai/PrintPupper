@@ -121,6 +121,21 @@ class Configuration:
             0.45  # Ratio between touchdown distance and total horizontal stance movement
         )
 
+        # 「お手」 HANDS 機能の追加 ----------------------
+        self.hands_time = 1.0
+        self.hands_x = 0.040    # Stance foots X forward 40mm
+        self.hands_stance_ftlo = np.array([
+            [self.hands_x, self.hands_x, self.hands_x, self.hands_x],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ])
+        self.hands_shake_ftlo_slice = np.array([
+            0.090,  # Shake foot X forward 90mm
+            0,      # Shake foot Y non op
+            0.060   # Shake foot Z Up 60mm
+        ])
+        # ------------------------------------------------
+
         self.LEG_ORIGINS = np.array(
             [
                 [self.LEG_FB, self.LEG_FB, -self.LEG_FB, -self.LEG_FB],
@@ -184,4 +199,4 @@ class Configuration:
     @property
     def phase_length(self):
         return 2 * self.overlap_ticks + 2 * self.swing_ticks
-   
+

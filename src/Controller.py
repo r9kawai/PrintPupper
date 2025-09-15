@@ -23,6 +23,9 @@ class Controller:
         self.smoothed_yaw = 0.0  # for REST mode only
         self.inverse_kinematics = inverse_kinematics
 
+        self.hands_tick = int(0)
+        self.hands_ticks = int(0)
+
         self.contact_modes = np.zeros(4)
         self.gait_controller = GaitController(self.config)
         self.swing_controller = SwingController(self.config)
@@ -107,22 +110,17 @@ class Controller:
                 trot_rotated_foot_locations, self.config
             )
 
+        # 「お手」 HANDS 機能の追加 -------------------------
         elif state.now_state == RState.HANDS:
-            hands_foot_locations = self.set_pose_to_rest(state, command)
-            if state.pre_state == RState.REST:
-                self.hands_tick = int(0)
-                self.hands_ticks = int(0.5 / self.config.dt)
-                self.hand_dt = np.array([0.120, 0, 0.060]) / self.hands_ticks
-
-            hands_foot_locations[:, 1] += (self.hand_dt * self.hands_tick)
-            state.joint_angles = self.inverse_kinematics(hands_foot_locations, self.config)
-
-            self.hands_tick += 1
-            self.hands_tick = min(self.hands_tick, self.hands_ticks - 1)
+            self.state_hands_proc(True, state, command)
 
         elif state.now_state == RState.REST:
+            self.state_hands_proc(False, state, command)
+            '''
             new_foot_locations = self.set_pose_to_rest(state, command)
             state.joint_angles = self.inverse_kinematics(new_foot_locations, self.config)
+            '''
+        # -------------------------------------------------
 
         state.ticks += 1
         state.pitch = command.pitch
@@ -165,3 +163,46 @@ class Controller:
         state.joint_angles = self.inverse_kinematics(
             state.foot_locations, self.config
         )
+
+    def state_hands_proc(self, on_off, state, command):
+        """
+        「お手」 HANDS 機能の追加
+        Args:
+            state (_type_): _description_
+            command (_type_): _description_
+        """
+        # REST 状態(HANDS実装前)と同じポーズ生成処理をする
+        # 標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
+        # foot_locations行列 = [X Y Z] [FR FL BL BR]
+        foot_locations = self.set_pose_to_rest(state, command)
+
+        if on_off and state.pre_state == RState.REST:
+            # REST -> HANDS の状態変化が起きた瞬間に hands_tick を開始する
+            # (HANDS用の時間経過開始)
+            self.hands_tick = int(0)
+
+            # HANDS 目的座標への tick数と 差分行列 _dt (4足全ての stance_dt と、1足だけの shake_dt) を得る
+            self.hands_ticks = int(self.config.hands_time / self.config.dt)
+            self.hands_stance_dt = self.config.hands_stance_ftlo / self.hands_ticks
+            self.hands_shake_dt = self.config.hands_shake_ftlo_slice / self.hands_ticks
+
+        # 操作するのは右前脚FRか左前脚FLか？
+        hands_FR0_FL1 = 1
+
+        if self.hands_tick != 0:
+            # foot_location行列に 差分行列 stance_dt と stance_dt を差し込む
+            foot_locations += (self.hands_stance_dt * self.hands_tick)
+            foot_locations[:, hands_FR0_FL1] += (self.hands_shake_dt * self.hands_tick)
+
+        # 逆運動学計算し joint_angled 行列(12自由度)を得る
+        state.joint_angles = self.inverse_kinematics(foot_locations, self.config)
+
+        if on_off:
+            # HANDS 状態では ticks に向けて tick を進める
+            self.hands_tick += 1
+            self.hands_tick = min(self.hands_tick, self.hands_ticks - 1)
+        else:
+            # REST 状態では 0 に向けて tick を戻す（逆転動作をさせる）
+            self.hands_tick -= 1
+            self.hands_tick = max(self.hands_tick, 0)
+        return

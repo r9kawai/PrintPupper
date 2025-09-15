@@ -27,7 +27,6 @@ def main(use_imu=False):
 
     # Wait until the activate button has been pressed
     joystick_interface.set_color(config.ps4_deactivated_color)
-    last_loop_time = time.time()
     while True:
         wait_loop = 0
         led_blink = 0
