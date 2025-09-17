@@ -69,8 +69,9 @@ class Configuration:
         #################### STANCE ####################
         self.delta_x = self.LEG_FB
         self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET + self.LEG_OPENING
-        self.x_shift_front = 0.010
-        self.x_shift_back =  0.000
+        self.x_center_of_gravity = 0.007
+        self.x_shift_front = self.x_center_of_gravity + 0.010
+        self.x_shift_back =  self.x_center_of_gravity - 0.010
         self.default_z_ref = -0.165
         self.min_z_ref = self.default_z_ref
         self.max_z_ref = self.default_z_ref + 0.050
@@ -78,10 +79,10 @@ class Configuration:
         self.z_delta_as_down_speed_rate = 0.4
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.30
+        self.max_x_velocity = 0.32
         self.max_x_velocity_minus = 0.12
-        self.max_y_velocity = 0.12
-        self.max_yaw_rate = 1.0
+        self.max_y_velocity = 0.14
+        self.max_yaw_rate = 1.2
         self.max_pitch = 25 * np.pi / 180.0
         self.max_pitch_as_trot = 7 * np.pi / 180.0
 
@@ -108,17 +109,19 @@ class Configuration:
             0.14   # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.22  # duration of the phase when only two feet are on the ground 
+            0.20  # duration of the phase when only two feet are on the ground 
         )
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.050
+        self.z_clearance = 0.055
         self.alpha = (
-            0.55  # Ratio between touchdown distance and total horizontal stance movement
+                  # alpha = 脚を接地している距離の割合
+            0.50  # Ratio between touchdown distance and total horizontal stance movement
         )
         self.beta = (
-            0.45  # Ratio between touchdown distance and total horizontal stance movement
+                  # beta = 脚を持上げている距離の割合
+            0.50  # Ratio between touchdown distance and total horizontal stance movement
         )
 
         # 「お手」 HANDS 機能の追加 ----------------------
@@ -160,8 +163,8 @@ class Configuration:
                 [
                     self.delta_x + self.x_shift_front,
                     self.delta_x + self.x_shift_front,
-                    -self.delta_x - self.x_shift_back,
-                    -self.delta_x - self.x_shift_back,
+                    -self.delta_x + self.x_shift_back,
+                    -self.delta_x + self.x_shift_back,
                 ],
                 [-self.delta_y, self.delta_y, -self.delta_y, self.delta_y],
                 [0, 0, 0, 0],
