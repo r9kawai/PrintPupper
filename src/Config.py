@@ -90,7 +90,6 @@ class Configuration:
         self.z_time_constant = 0.02
         self.z_speed = 0.01  # maximum speed [m/s]
         self.pitch_deadband = 0.06
-        self.pitch_gain = 0.0
         self.pitch_time_constant = 0.25
         self.max_pitch_rate = 0.1
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
@@ -125,10 +124,12 @@ class Configuration:
         )
 
         # 「お手」 HANDS 機能の追加 ----------------------
-        self.hands_time = 1.0
-        self.hands_x = 0.040    # Stance foots X forward 40mm
+        self.hands_time = 0.5
+        self.hands_F_x = 0.040    # Stance F foots X forward 40mm
+        self.hands_B_x = 0.050    # Stance B foots X forward 50mm
+        self.hands_pitch = self.max_pitch - self.pitch_deadband
         self.hands_stance_ftlo = np.array([
-            [self.hands_x, self.hands_x, self.hands_x, self.hands_x],
+            [self.hands_F_x, self.hands_F_x, self.hands_B_x, self.hands_B_x],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
         ])

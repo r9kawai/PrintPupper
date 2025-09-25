@@ -112,7 +112,14 @@ class Controller:
 
         # 「お手」 HANDS 機能の追加 -------------------------
         elif state.now_state == RState.HANDS:
-            self.state_hands_proc(True, state, command)
+            # 右スティック操作中は HANDS を拒否する判断処理
+            if (state.pre_state == RState.REST and
+                    (abs(command.pitch) >= self.config.pitch_deadband
+                    or abs(command.yaw_rate) >= self.config.pitch_deadband)):
+                state.now_state = RState.REST
+                self.state_hands_proc(False, state, command)
+            else:
+                self.state_hands_proc(True, state, command)
 
         elif state.now_state == RState.REST:
             self.state_hands_proc(False, state, command)
@@ -171,10 +178,16 @@ class Controller:
             state (_type_): _description_
             command (_type_): _description_
         """
-        # REST 状態(HANDS実装前)と同じポーズ生成処理をする
-        # 標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
-        # foot_locations行列 = [X Y Z] [FR FL BL BR]
-        foot_locations = self.set_pose_to_rest(state, command)
+        hands_ticks = int(self.config.hands_time / self.config.dt)
+        hands_opy = command.pitch
+        hands_opx = command.yaw_rate
+        
+        if on_off:
+            command.pitch = 0
+            command.yaw_rate = 0
+        else:
+            hands_opy = float(0)
+            hands_opx = float(0)
 
         if on_off and state.pre_state == RState.REST:
             # REST -> HANDS の状態変化が起きた瞬間に hands_tick を開始する
@@ -182,12 +195,22 @@ class Controller:
             self.hands_tick = int(0)
 
             # HANDS 目的座標への tick数と 差分行列 _dt (4足全ての stance_dt と、1足だけの shake_dt) を得る
-            self.hands_ticks = int(self.config.hands_time / self.config.dt)
-            self.hands_stance_dt = self.config.hands_stance_ftlo / self.hands_ticks
-            self.hands_shake_dt = self.config.hands_shake_ftlo_slice / self.hands_ticks
+            self.hands_stance_dt = self.config.hands_stance_ftlo / hands_ticks
+            self.hands_shake_dt = self.config.hands_shake_ftlo_slice / hands_ticks
+            self.hands_pitch_dt = self.config.hands_pitch / hands_ticks
 
         # 操作するのは右前脚FRか左前脚FLか？
         hands_FR0_FL1 = 1
+
+        # hands_pitch 適用の処理
+        if self.hands_tick != 0:
+            target_pitch = self.hands_pitch_dt * self.hands_tick
+            print(f"hands_opx {hands_opx:+07.2f}, hands_opy {hands_opy:+07.2f}, target_pitch {target_pitch:+07.2f}, state.pitch {state.pitch:+07.2f}, command.pitch {command.pitch:+07.2f}")
+
+        # REST 状態(HANDS実装前)と同じポーズ生成処理をする
+        # 標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
+        # foot_locations行列 = [X Y Z] [FR FL BL BR]
+        foot_locations = self.set_pose_to_rest(state, command)
 
         if self.hands_tick != 0:
             # foot_location行列に 差分行列 stance_dt と stance_dt を差し込む
@@ -200,7 +223,7 @@ class Controller:
         if on_off:
             # HANDS 状態では ticks に向けて tick を進める
             self.hands_tick += 1
-            self.hands_tick = min(self.hands_tick, self.hands_ticks - 1)
+            self.hands_tick = min(self.hands_tick, hands_ticks - 1)
         else:
             # REST 状態では 0 に向けて tick を戻す（逆転動作をさせる）
             self.hands_tick -= 1
