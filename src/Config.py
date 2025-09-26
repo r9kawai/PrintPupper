@@ -125,9 +125,11 @@ class Configuration:
 
         # 「お手」 HANDS 機能の追加 ----------------------
         self.hands_time = 0.5
-        self.hands_F_x = 0.040    # Stance F foots X forward 40mm
-        self.hands_B_x = 0.050    # Stance B foots X forward 50mm
+        self.hands_F_x = 0.075    # Stance F foots X mm
+        self.hands_B_x = 0.075    # Stance B foots X mm
+        self.hands_yaw = 1 / self.hands_time
         self.hands_pitch = self.max_pitch - self.pitch_deadband
+        self.hands_roll = 0.25
         self.hands_stance_ftlo = np.array([
             [self.hands_F_x, self.hands_F_x, self.hands_B_x, self.hands_B_x],
             [0, 0, 0, 0],
@@ -136,7 +138,7 @@ class Configuration:
         self.hands_shake_ftlo_slice = np.array([
             0.090,  # Shake foot X forward 90mm
             0,      # Shake foot Y non op
-            0.060   # Shake foot Z Up 60mm
+            0.090   # Shake foot Z Up 60mm
         ])
         # ------------------------------------------------
 

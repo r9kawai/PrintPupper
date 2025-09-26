@@ -16,6 +16,7 @@ class Command:
         self.joy_ps4_usb = True
 
         self.hands_event = False
+        self.hands_event_arg_RL = int(0)
         self.trot_event = False
         self.activate_event = False
         self.caliblate_mode_event = False
