@@ -191,20 +191,11 @@ class Controller:
             # hands_tick を開始する (HANDS用の時間経過開始)
             self.hands_tick = int(0)
 
-            # HANDS 目的座標への tick数と 差分行列 _dt (4足全ての stance_dt と、1足だけの shake_dt) を得る
-            self.hands_stance_dt = self.config.hands_stance_ftlo / hands_ticks
-            self.hands_shake_dt = self.config.hands_shake_ftlo_slice / hands_ticks
-            self.hands_pitch_dt = self.config.hands_pitch / hands_ticks
-            self.hands_roll_dt = self.config.hands_roll / hands_ticks
-
-            # 操作するのは右前脚FR(0)か左前脚FL(1)か？
-            self.hands_RL = command.hands_event_arg_RL
-
-        # HANDS 姿勢の適用
-        if self.hands_tick != 0:
-            command.yaw_rate = self.config.hands_yaw
-            command.pitch = self.hands_pitch_dt * self.hands_tick
-            # command.roll = self.hands_roll_dt * self.hands_tick * (1 if self.hands_RL == 0 else -1)
+            # 差分行列 hands_pose_dt を得る
+            if command.hands_event_arg_RL == 0: # HANDS 操作 右前脚FR(0) or 左前脚FL(1)
+                self.hands_pose_dt = self.config.hands_R_pose / hands_ticks
+            else:
+                self.hands_pose_dt = self.config.hands_L_pose / hands_ticks
 
         print(f"hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, ",
             f"command.yaw_rate {command.yaw_rate:+07.2f}, "
@@ -212,14 +203,13 @@ class Controller:
             f"command.roll {command.roll:+07.2f}, state.roll {state.roll:+07.2f}")
 
         # REST 状態(HANDS実装前)と同じポーズ生成処理をする
-        # 標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
-        # foot_locations行列 = [X Y Z] [FR FL BL BR]
+        #   標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
+        #   foot_locations行列 = [X Y Z] [FR FL BL BR]
         foot_locations = self.set_pose_to_rest(state, command)
 
         if self.hands_tick != 0:
-            # foot_location行列に 差分行列 stance_dt と stance_dt を差し込む
-            foot_locations += (self.hands_stance_dt * self.hands_tick)
-            foot_locations[:, self.hands_RL] += (self.hands_shake_dt * self.hands_tick)
+            # foot_location行列に 差分行列 hands_pose_dt * tick を差し込む
+            foot_locations += (self.hands_pose_dt * self.hands_tick)
 
         # 逆運動学計算し joint_angled 行列(12自由度)を得る
         state.joint_angles = self.inverse_kinematics(foot_locations, self.config)
