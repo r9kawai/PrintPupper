@@ -14,6 +14,7 @@ class JoystickInterface:
         self.config = config
         self.previous_gait_toggle = 0
         self.previous_hands_toggle = 0
+        self.previous_hands_event_arg_RL = 0
         self.previous_activate_toggle = 0
 
         self.auto_trot = False
@@ -107,7 +108,13 @@ class JoystickInterface:
             hands_toggle = msg["circle"] or msg["x"]
             command.hands_event = (hands_toggle == 1 and self.previous_hands_toggle == 0)
             if command.hands_event:
-                command.hands_event_arg_RL = 0 if msg["circle"] else 1
+                if msg["circle"]:
+                    command.hands_event_arg_RL = 0
+                else:
+                    command.hands_event_arg_RL = 1
+                self.previous_hands_event_arg_RL = command.hands_event_arg_RL
+            else:
+                command.hands_event_arg_RL = self.previous_hands_event_arg_RL
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)

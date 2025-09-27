@@ -175,41 +175,54 @@ class Controller:
             state (_type_): _description_
             command (_type_): _description_
         """
-        hands_ticks = int(self.config.hands_time / self.config.dt)
-        hands_opy = command.pitch
-        hands_opx = command.yaw_rate
-        
-        if on_off:
-            command.pitch = 0
-            command.yaw_rate = 0
-        else:
-            hands_opy = float(0)
-            hands_opx = float(0)
+        '''
+        print(f"command.yaw_rate {command.yaw_rate:+07.2f}, "
+            f"command.pitch {command.pitch:+07.2f}, state.pitch {state.pitch:+07.2f}, ",
+            f"command.roll {command.roll:+07.2f}, state.roll {state.roll:+07.2f}")
+        '''
+        _yaw_rate = command.yaw_rate
+        _pitch = command.pitch
+        hands_opx = float(0)
+        hands_opy = float(0)
+        switch_RL = command.hands_event_arg_RL
 
         # REST -> HANDS の状態変化が起きた瞬間の処理
         if on_off and state.pre_state == RState.REST:
+            print("start HANDS")
             # hands_tick を開始する (HANDS用の時間経過開始)
             self.hands_tick = int(0)
 
             # 差分行列 hands_pose_dt を得る
-            if command.hands_event_arg_RL == 0: # HANDS 操作 右前脚FR(0) or 左前脚FL(1)
-                self.hands_pose_dt = self.config.hands_R_pose / hands_ticks
+            if switch_RL == 0: # HANDS 操作 右前脚FR(0) or 左前脚FL(1)
+                self.hands_pose_dt = self.config.hands_R_pose / self.config.hands_ticks
             else:
-                self.hands_pose_dt = self.config.hands_L_pose / hands_ticks
+                self.hands_pose_dt = self.config.hands_L_pose / self.config.hands_ticks
 
-        print(f"hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, ",
-            f"command.yaw_rate {command.yaw_rate:+07.2f}, "
-            f"command.pitch {command.pitch:+07.2f}, state.pitch {state.pitch:+07.2f}, ",
-            f"command.roll {command.roll:+07.2f}, state.roll {state.roll:+07.2f}")
+        # HANDS 動作中は右スティックで姿勢制御できなくなる代わりに、"前足だけ" を操作できるようにする
+        # "HANDS 時間経過中" ならば command.yaw_rate, command.pitch の指定値を盗んで HANDS 動作のパラメータとする
+        # 元の command.yaw_rate, command.pitch はポーズ生成処理に対して 0 指定にしておく
+        if self.hands_tick != 0:
+            command.yaw_rate = 0
+            command.pitch = 0
+            hands_opx = _pitch / (self.config.max_pitch - self.config.pitch_deadband)
+            hands_opy = _yaw_rate / self.config.max_yaw_rate
+            hands_opx = max(-1.0, min(hands_opx, 1.0))
+            hands_opy = max(-1.0, min(hands_opy, 1.0))
+            print(f"switch_RL {switch_RL}, hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, ")
 
         # REST 状態(HANDS実装前)と同じポーズ生成処理をする
         #   標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
         #   foot_locations行列 = [X Y Z] [FR FL BL BR]
         foot_locations = self.set_pose_to_rest(state, command)
 
-        if self.hands_tick != 0:
+        if self.hands_tick != 0:    # HANDS 時間経過中ならば
             # foot_location行列に 差分行列 hands_pose_dt * tick を差し込む
             foot_locations += (self.hands_pose_dt * self.hands_tick)
+            
+            # foot_location行列に 右スティック操作を差し込む
+            foot_locations[0][switch_RL] += (0.030 * hands_opx)
+            foot_locations[2][switch_RL] += (0.030 * hands_opx)
+            foot_locations[1][switch_RL] += (0.030 * hands_opy)
 
         # 逆運動学計算し joint_angled 行列(12自由度)を得る
         state.joint_angles = self.inverse_kinematics(foot_locations, self.config)
@@ -217,9 +230,13 @@ class Controller:
         if on_off:
             # HANDS 状態では ticks に向けて tick を進める
             self.hands_tick += 1
-            self.hands_tick = min(self.hands_tick, hands_ticks - 1)
+            self.hands_tick = min(self.hands_tick, self.config.hands_ticks - 1)
         else:
             # REST 状態では 0 に向けて tick を戻す（逆転動作をさせる）
             self.hands_tick -= 1
             self.hands_tick = max(self.hands_tick, 0)
+
+        # command 現行処理の整合性を保つために値を元に戻しておく
+        command.yaw_rate = _yaw_rate
+        command.pitch = _pitch
         return

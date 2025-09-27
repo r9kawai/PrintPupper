@@ -125,6 +125,7 @@ class Configuration:
 
         # 「お手」 HANDS 機能の追加 ----------------------
         self.hands_time = 0.70
+        self.hands_ticks = int(self.hands_time / self.dt)
         self.hands_R_pose = np.array([
             [ 0.120, 0.030, 0.030, 0.030],
             [     0,-0.050,     0,     0],
