@@ -20,11 +20,12 @@ class Controller:
     ):
         self.config = config
 
-        self.smoothed_yaw = 0.0  # for REST mode only
+        self.smoothed_yaw = float(0)
         self.inverse_kinematics = inverse_kinematics
 
         self.hands_tick = int(0)
         self.hands_ticks = int(0)
+        self.hands_smoothed_yaw = float(0)
 
         self.contact_modes = np.zeros(4)
         self.gait_controller = GaitController(self.config)
@@ -180,11 +181,24 @@ class Controller:
             f"command.pitch {command.pitch:+07.2f}, state.pitch {state.pitch:+07.2f}, ",
             f"command.roll {command.roll:+07.2f}, state.roll {state.roll:+07.2f}")
         '''
+        # 各ローカル変数の初期化
         _yaw_rate = command.yaw_rate
         _pitch = command.pitch
         hands_opx = float(0)
         hands_opy = float(0)
         switch_RL = command.hands_event_arg_RL
+
+        # HANDS 前足操作用の hands_smoothed_yaw の更新
+        _yaw_proportion = _yaw_rate / self.config.max_yaw_rate
+        self.hands_smoothed_yaw += (
+            self.config.dt
+            * clipped_first_order_filter(
+                self.hands_smoothed_yaw,
+                _yaw_proportion * - self.config.max_stance_yaw,
+                self.config.max_stance_yaw_rate,
+                0.25
+            )
+        )
 
         # REST -> HANDS の状態変化が起きた瞬間の処理
         if on_off and state.pre_state == RState.REST:
@@ -205,7 +219,7 @@ class Controller:
             command.yaw_rate = 0
             command.pitch = 0
             hands_opx = _pitch / (self.config.max_pitch - self.config.pitch_deadband)
-            hands_opy = _yaw_rate / self.config.max_yaw_rate
+            hands_opy = self.hands_smoothed_yaw / self.config.max_stance_yaw
             hands_opx = max(-1.0, min(hands_opx, 1.0))
             hands_opy = max(-1.0, min(hands_opy, 1.0))
             print(f"switch_RL {switch_RL}, hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, ")
@@ -220,9 +234,9 @@ class Controller:
             foot_locations += (self.hands_pose_dt * self.hands_tick)
             
             # foot_location行列に 右スティック操作を差し込む
-            foot_locations[0][switch_RL] += (0.030 * hands_opx)
-            foot_locations[2][switch_RL] += (0.030 * hands_opx)
-            foot_locations[1][switch_RL] += (0.030 * hands_opy)
+            foot_locations[0][switch_RL] += (self.config.hands_opx_dist * hands_opx)
+            # foot_locations[2][switch_RL] += (0.030 * hands_opx)
+            foot_locations[1][switch_RL] += (self.config.hands_opy_dist * hands_opy)
 
         # 逆運動学計算し joint_angled 行列(12自由度)を得る
         state.joint_angles = self.inverse_kinematics(foot_locations, self.config)
