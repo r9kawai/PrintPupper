@@ -26,6 +26,7 @@ class Controller:
         self.hands_tick = int(0)
         self.hands_ticks = int(0)
         self.hands_smoothed_yaw = float(0)
+        self.hands_smoothed_push = float(0)
 
         self.contact_modes = np.zeros(4)
         self.gait_controller = GaitController(self.config)
@@ -186,9 +187,10 @@ class Controller:
         _pitch = command.pitch
         hands_opx = float(0)
         hands_opy = float(0)
+        hands_push = float(0)
         switch_RL = command.hands_event_arg_RL
 
-        # HANDS 前足操作用の hands_smoothed_yaw の更新
+        # HANDS 前足操作用の hands_smoothed_yaw, hands_smoothed_push の更新
         _yaw_proportion = _yaw_rate / self.config.max_yaw_rate
         self.hands_smoothed_yaw += (
             self.config.dt
@@ -196,6 +198,15 @@ class Controller:
                 self.hands_smoothed_yaw,
                 _yaw_proportion * - self.config.max_stance_yaw,
                 self.config.max_stance_yaw_rate,
+                0.25
+            )
+        )
+        self.hands_smoothed_push += (
+            self.config.dt
+            * clipped_first_order_filter(
+                self.hands_smoothed_push,
+                command.hands_event_arg_PUSH,
+                4.0,
                 0.25
             )
         )
@@ -220,9 +231,10 @@ class Controller:
             command.pitch = 0
             hands_opx = _pitch / (self.config.max_pitch - self.config.pitch_deadband)
             hands_opy = self.hands_smoothed_yaw / self.config.max_stance_yaw
-            hands_opx = max(-1.0, min(hands_opx, 1.0))
+            hands_opx = max(-1.0, min(hands_opx, 0.5))
             hands_opy = max(-1.0, min(hands_opy, 1.0))
-            print(f"switch_RL {switch_RL}, hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, ")
+            hands_push = max(0.0, min(self.hands_smoothed_push, 1.0))
+            print(f"switch_RL {switch_RL}, hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, hands_push {hands_push:+07.2f}")
 
         # REST 状態(HANDS実装前)と同じポーズ生成処理をする
         #   標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
@@ -235,8 +247,8 @@ class Controller:
             
             # foot_location行列に 右スティック操作を差し込む
             foot_locations[0][switch_RL] += (self.config.hands_opx_dist * hands_opx)
-            # foot_locations[2][switch_RL] += (0.030 * hands_opx)
             foot_locations[1][switch_RL] += (self.config.hands_opy_dist * hands_opy)
+            foot_locations[2][switch_RL] += (self.config.hands_opz_dist * hands_push)
 
         # 逆運動学計算し joint_angled 行列(12自由度)を得る
         state.joint_angles = self.inverse_kinematics(foot_locations, self.config)

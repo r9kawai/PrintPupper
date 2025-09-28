@@ -104,7 +104,7 @@ class JoystickInterface:
             # Check if requesting a state transition to trotting, or from trotting to resting
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
 
-            # Check if requesting a state transition to shake hands, from trotting or resting
+            # 「お手」 HANDS 機能の追加 ----------------------------------------------------------
             hands_toggle = msg["circle"] or msg["x"]
             command.hands_event = (hands_toggle == 1 and self.previous_hands_toggle == 0)
             if command.hands_event:
@@ -115,6 +115,8 @@ class JoystickInterface:
                 self.previous_hands_event_arg_RL = command.hands_event_arg_RL
             else:
                 command.hands_event_arg_RL = self.previous_hands_event_arg_RL
+            command.hands_event_arg_PUSH = 1 if msg["R3"] else 0
+            # ----------------------------------------------------------------------------------
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)

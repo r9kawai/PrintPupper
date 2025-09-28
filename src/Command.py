@@ -17,6 +17,7 @@ class Command:
 
         self.hands_event = False
         self.hands_event_arg_RL = int(0)
+        self.hands_event_arg_PUSH = int(0)
         self.trot_event = False
         self.activate_event = False
         self.caliblate_mode_event = False

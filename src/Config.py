@@ -127,17 +127,18 @@ class Configuration:
         self.hands_time = 0.70
         self.hands_ticks = int(self.hands_time / self.dt)
         self.hands_R_pose = np.array([
-            [ 0.100, 0.030, 0.030, 0.030],
+            [ 0.000, 0.030, 0.030, 0.030],
             [     0,-0.050,     0,     0],
-            [ 0.060,-0.030, 0.060, 0.060],
+            [ 0.070,-0.030, 0.060, 0.060],
         ])
         self.hands_L_pose = np.array([
-            [ 0.030, 0.100, 0.030, 0.030],
+            [ 0.030, 0.000, 0.030, 0.030],
             [ 0.050,     0,     0,     0],
-            [-0.030, 0.060, 0.060, 0.060],
+            [-0.030, 0.070, 0.060, 0.060],
         ])
-        self.hands_opx_dist = -0.040
+        self.hands_opx_dist = -0.090
         self.hands_opy_dist = -0.040
+        self.hands_opz_dist = -0.080
         # ------------------------------------------------
 
         self.LEG_ORIGINS = np.array(
