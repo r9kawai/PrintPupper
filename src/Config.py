@@ -116,11 +116,11 @@ class Configuration:
         self.z_clearance = 0.055
         self.alpha = (
                   # alpha = 脚を接地している距離の割合
-            0.50  # Ratio between touchdown distance and total horizontal stance movement
+            0.45  # Ratio between touchdown distance and total horizontal stance movement
         )
         self.beta = (
                   # beta = 脚を持上げている距離の割合
-            0.50  # Ratio between touchdown distance and total horizontal stance movement
+            0.55  # Ratio between touchdown distance and total horizontal stance movement
         )
 
         # 「お手」 HANDS 機能の追加 ----------------------
