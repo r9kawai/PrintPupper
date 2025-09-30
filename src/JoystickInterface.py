@@ -3,7 +3,7 @@ import select
 import pickle
 import numpy as np
 import time
-from State import BehaviorState, State
+from State import RState, State
 from Command import Command
 from Utilities import deadband, clipped_first_order_filter
 
@@ -13,8 +13,8 @@ class JoystickInterface:
     ):
         self.config = config
         self.previous_gait_toggle = 0
-        self.previous_state = BehaviorState.REST
-        self.previous_hop_toggle = 0
+        self.previous_hands_toggle = 0
+        self.previous_hands_event_arg_RL = 0
         self.previous_activate_toggle = 0
 
         self.auto_trot = False
@@ -73,7 +73,7 @@ class JoystickInterface:
                     print('auto trot mode:Off')
 
             gait_toggle = msg["R1"]
-            now_trot = (state.behavior_state == BehaviorState.TROT)
+            now_trot = (state.now_state == RState.TROT)
             input_move_on = False
             msg_val_lx = float(msg["lx"])
             msg_val_ly = float(msg["ly"])
@@ -96,23 +96,31 @@ class JoystickInterface:
 
             if self.auto_trot and (not now_trot) and input_move_on:
                 gait_toggle = 1
-                #print('auto trot:On')
+                print('Robot auto trot On')
             elif self.auto_trot and now_trot and (not input_move_on) and (self.auto_trot_counter == 1):
                 gait_toggle = 1
-                #print('auto trot:Off')
+                print('Robot auto trot Off')
 
             # Check if requesting a state transition to trotting, or from trotting to resting
             command.trot_event = (gait_toggle == 1 and self.previous_gait_toggle == 0)
 
-            # Check if requesting a state transition to hopping, from trotting or resting
-            # hop_toggle = msg["x"]
-            # command.hop_event = (hop_toggle == 1 and self.previous_hop_toggle == 0) 
-            hop_toggle = 0
+            # 「お手」 HANDS 機能の追加 ----------------------------------------------------------
+            hands_toggle = msg["circle"] or msg["x"]
+            command.hands_event = (hands_toggle == 1 and self.previous_hands_toggle == 0)
+            if command.hands_event:
+                if msg["circle"]:
+                    command.hands_event_arg_RL = 0
+                else:
+                    command.hands_event_arg_RL = 1
+                self.previous_hands_event_arg_RL = command.hands_event_arg_RL
+            else:
+                command.hands_event_arg_RL = self.previous_hands_event_arg_RL
+            command.hands_event_arg_PUSH = 1 if msg["R3"] else 0
+            # ----------------------------------------------------------------------------------
             
             activate_toggle = msg["L1"]
             command.activate_event = (activate_toggle == 1 and self.previous_activate_toggle == 0)
             if command.activate_event:
-                print("command.height reset.")
                 state.height = self.config.default_z_ref
 
             if msg["long_x"]:
@@ -122,7 +130,7 @@ class JoystickInterface:
 
             # Update previous values for toggles and state
             self.previous_gait_toggle = gait_toggle
-            self.previous_hop_toggle = hop_toggle
+            self.previous_hands_toggle = hands_toggle
             self.previous_activate_toggle = activate_toggle
 
             ####### Handle continuous commands ########
@@ -153,9 +161,9 @@ class JoystickInterface:
             else:
                 max_pitch_ = self.config.max_pitch
             if self.rx_ry_switch:
-                pitch =  (msg_val_rx + self.config.pitch_gain) * max_pitch_
+                pitch = msg_val_rx * max_pitch_
             else:
-                pitch = ((msg_val_ry + self.config.pitch_gain) * -1) * max_pitch_
+                pitch = msg_val_ry * -1 * max_pitch_
             deadbanded_pitch = deadband(
                 pitch, self.config.pitch_deadband
             )

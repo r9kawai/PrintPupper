@@ -69,8 +69,9 @@ class Configuration:
         #################### STANCE ####################
         self.delta_x = self.LEG_FB
         self.delta_y = self.LEG_LR + self.ABDUCTION_OFFSET + self.LEG_OPENING
-        self.x_shift_front = 0.010
-        self.x_shift_back =  0.000
+        self.x_center_of_gravity = 0.007
+        self.x_shift_front = self.x_center_of_gravity + 0.010
+        self.x_shift_back =  self.x_center_of_gravity - 0.010
         self.default_z_ref = -0.165
         self.min_z_ref = self.default_z_ref
         self.max_z_ref = self.default_z_ref + 0.050
@@ -78,10 +79,10 @@ class Configuration:
         self.z_delta_as_down_speed_rate = 0.4
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.30
+        self.max_x_velocity = 0.32
         self.max_x_velocity_minus = 0.12
-        self.max_y_velocity = 0.12
-        self.max_yaw_rate = 1.0
+        self.max_y_velocity = 0.14
+        self.max_yaw_rate = 1.2
         self.max_pitch = 25 * np.pi / 180.0
         self.max_pitch_as_trot = 7 * np.pi / 180.0
 
@@ -89,7 +90,6 @@ class Configuration:
         self.z_time_constant = 0.02
         self.z_speed = 0.01  # maximum speed [m/s]
         self.pitch_deadband = 0.06
-        self.pitch_gain = 0.0
         self.pitch_time_constant = 0.25
         self.max_pitch_rate = 0.1
         self.roll_speed = 0.16  # maximum roll rate [rad/s]
@@ -108,18 +108,38 @@ class Configuration:
             0.14   # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.22  # duration of the phase when only two feet are on the ground 
+            0.20  # duration of the phase when only two feet are on the ground 
         )
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.050
+        self.z_clearance = 0.055
         self.alpha = (
-            0.55  # Ratio between touchdown distance and total horizontal stance movement
-        )
-        self.beta = (
+                  # alpha = 脚を接地している距離の割合
             0.45  # Ratio between touchdown distance and total horizontal stance movement
         )
+        self.beta = (
+                  # beta = 脚を持上げている距離の割合
+            0.55  # Ratio between touchdown distance and total horizontal stance movement
+        )
+
+        # 「お手」 HANDS 機能の追加 ----------------------
+        self.hands_time = 0.70
+        self.hands_ticks = int(self.hands_time / self.dt)
+        self.hands_R_pose = np.array([
+            [ 0.000, 0.030, 0.030, 0.030],
+            [     0,-0.050,     0,     0],
+            [ 0.070,-0.030, 0.060, 0.060],
+        ])
+        self.hands_L_pose = np.array([
+            [ 0.030, 0.000, 0.030, 0.030],
+            [ 0.050,     0,     0,     0],
+            [-0.030, 0.070, 0.060, 0.060],
+        ])
+        self.hands_opx_dist = -0.090
+        self.hands_opy_dist = -0.040
+        self.hands_opz_dist = -0.080
+        # ------------------------------------------------
 
         self.LEG_ORIGINS = np.array(
             [
@@ -145,8 +165,8 @@ class Configuration:
                 [
                     self.delta_x + self.x_shift_front,
                     self.delta_x + self.x_shift_front,
-                    -self.delta_x - self.x_shift_back,
-                    -self.delta_x - self.x_shift_back,
+                    -self.delta_x + self.x_shift_back,
+                    -self.delta_x + self.x_shift_back,
                 ],
                 [-self.delta_y, self.delta_y, -self.delta_y, self.delta_y],
                 [0, 0, 0, 0],
@@ -184,4 +204,4 @@ class Configuration:
     @property
     def phase_length(self):
         return 2 * self.overlap_ticks + 2 * self.swing_ticks
-   
+

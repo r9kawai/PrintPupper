@@ -2,13 +2,12 @@ from Gaits import GaitController
 from StanceController import StanceController
 from SwingLegController import SwingController
 from Utilities import clipped_first_order_filter
-from State import BehaviorState, State
+from State import RState, State
 
 import numpy as np
 from transforms3d.euler import euler2mat, quat2euler
 from transforms3d.quaternions import qconjugate, quat2axangle
 from transforms3d.axangles import axangle2mat
-
 
 class Controller:
     """Controller and planner object
@@ -21,18 +20,23 @@ class Controller:
     ):
         self.config = config
 
-        self.smoothed_yaw = 0.0  # for REST mode only
+        self.smoothed_yaw = float(0)
         self.inverse_kinematics = inverse_kinematics
+
+        self.hands_tick = int(0)
+        self.hands_ticks = int(0)
+        self.hands_switch_RL = int(0)
+        self.hands_smoothed_yaw = float(0)
+        self.hands_smoothed_push = float(0)
 
         self.contact_modes = np.zeros(4)
         self.gait_controller = GaitController(self.config)
         self.swing_controller = SwingController(self.config)
         self.stance_controller = StanceController(self.config)
 
-        self.hop_transition_mapping = {BehaviorState.REST: BehaviorState.HOP, BehaviorState.HOP: BehaviorState.FINISHHOP, BehaviorState.FINISHHOP: BehaviorState.REST, BehaviorState.TROT: BehaviorState.HOP}
-        self.trot_transition_mapping = {BehaviorState.REST: BehaviorState.TROT, BehaviorState.TROT: BehaviorState.REST, BehaviorState.HOP: BehaviorState.TROT, BehaviorState.FINISHHOP: BehaviorState.TROT}
-        self.activate_transition_mapping = {BehaviorState.DEACTIVATED: BehaviorState.REST, BehaviorState.REST: BehaviorState.DEACTIVATED}
-
+        self.activate_transition_mapping =  {RState.DEACT:RState.REST,  RState.REST:RState.DEACT, RState.TROT:RState.TROT, RState.HANDS:RState.HANDS}
+        self.trot_transition_mapping =      {RState.DEACT:RState.DEACT, RState.REST:RState.TROT,  RState.TROT:RState.REST, RState.HANDS:RState.HANDS}
+        self.hands_transition_mapping =     {RState.DEACT:RState.DEACT, RState.REST:RState.HANDS, RState.TROT:RState.TROT, RState.HANDS:RState.REST}
 
     def step_gait(self, state, command):
         """Calculate the desired foot locations for the next timestep
@@ -73,21 +77,22 @@ class Controller:
         """
 
         ########## Update operating state based on command ######
+        state.pre_state = state.now_state
         if command.activate_event:
-            state.behavior_state = self.activate_transition_mapping[state.behavior_state]
+            state.now_state = self.activate_transition_mapping[state.now_state]
         elif command.trot_event:
-            state.behavior_state = self.trot_transition_mapping[state.behavior_state]
-        elif command.hop_event:
-            state.behavior_state = self.hop_transition_mapping[state.behavior_state]
+            state.now_state = self.trot_transition_mapping[state.now_state]
+        elif command.hands_event:
+            state.now_state = self.hands_transition_mapping[state.now_state]
 
-        if state.behavior_state == BehaviorState.TROT:
+        if state.now_state == RState.TROT:
             state.foot_locations, contact_modes = self.step_gait(
                 state,
                 command,
             )
 
             # Apply the desired body rotation
-            rotated_foot_locations = (
+            trot_rotated_foot_locations = (
                 euler2mat(
                     command.roll, command.pitch, 0.0
                 )
@@ -102,69 +107,172 @@ class Controller:
             pitch_compensation = correction_factor * np.clip(pitch, -max_tilt, max_tilt)
             rmat = euler2mat(roll_compensation, pitch_compensation, 0)
 
-            rotated_foot_locations = rmat.T @ rotated_foot_locations
+            trot_rotated_foot_locations = rmat.T @ trot_rotated_foot_locations
 
             state.joint_angles = self.inverse_kinematics(
-                rotated_foot_locations, self.config
+                trot_rotated_foot_locations, self.config
             )
 
-        elif state.behavior_state == BehaviorState.HOP:
-            state.foot_locations = (
-                self.config.default_stance
-                + np.array([0, 0, -0.09])[:, np.newaxis]
-            )
-            state.joint_angles = self.inverse_kinematics(
-                state.foot_locations, self.config
-            )
+        # 「お手」 HANDS 機能の追加 (REST は HANDS と共通の state_hands_proc に置き換え) -----
+        elif state.now_state == RState.HANDS:
+            # 右スティック or 上下高さ変更 の操作中は REST->HANDS 移行を拒否する
+            if (state.pre_state == RState.REST and
+                    (abs(command.pitch) >= self.config.pitch_deadband
+                    or abs(command.yaw_rate) >= self.config.pitch_deadband)
+                    or command.height != self.config.default_z_ref):
+                state.now_state = RState.REST
+                self.state_hands_proc(False, state, command)
+            else:
+                self.state_hands_proc(True, state, command)
 
-        elif state.behavior_state == BehaviorState.FINISHHOP:
-            state.foot_locations = (
-                self.config.default_stance
-                + np.array([0, 0, -0.22])[:, np.newaxis]
-            )
-            state.joint_angles = self.inverse_kinematics(
-                state.foot_locations, self.config
-            )
-
-        elif state.behavior_state == BehaviorState.REST:
-            yaw_proportion = command.yaw_rate / self.config.max_yaw_rate
-            self.smoothed_yaw += (
-                self.config.dt
-                * clipped_first_order_filter(
-                    self.smoothed_yaw,
-                    yaw_proportion * -self.config.max_stance_yaw,
-                    self.config.max_stance_yaw_rate,
-                    self.config.yaw_time_constant,
-                )
-            )
-            # Set the foot locations to the default stance plus the standard height
-            state.foot_locations = (
-                self.config.default_stance
-                + np.array([0, 0, command.height])[:, np.newaxis]
-            )
-            # Apply the desired body rotation
-            rotated_foot_locations = (
-                euler2mat(
-                    command.roll,
-                    command.pitch,
-                    self.smoothed_yaw,
-                )
-                @ state.foot_locations
-            )
-            state.joint_angles = self.inverse_kinematics(
-                rotated_foot_locations, self.config
-            )
+        elif state.now_state == RState.REST:
+            # 右スティック or PUSH の操作中は HANDS->REST 移行を拒否する
+            if (state.pre_state == RState.HANDS and
+                    (abs(command.pitch) >= self.config.pitch_deadband
+                    or abs(command.yaw_rate) >= self.config.pitch_deadband
+                    or command.hands_event_arg_PUSH)):
+                state.now_state = RState.HANDS
+                self.state_hands_proc(True, state, command)
+            else:
+                self.state_hands_proc(False, state, command)
+        # --------------------------------------------------------------------------------
 
         state.ticks += 1
         state.pitch = command.pitch
         state.roll = command.roll
         state.height = command.height
+        return
 
-    def set_pose_to_default(self):
+    def set_pose_to_rest(self, state, command):
+        yaw_proportion = command.yaw_rate / self.config.max_yaw_rate
+        self.smoothed_yaw += (
+            self.config.dt
+            * clipped_first_order_filter(
+                self.smoothed_yaw,
+                yaw_proportion * -self.config.max_stance_yaw,
+                self.config.max_stance_yaw_rate,
+                self.config.yaw_time_constant,
+            )
+        )
+        # Set the foot locations to the default stance plus the standard height
+        state.foot_locations = (
+            self.config.default_stance
+            + np.array([0, 0, command.height])[:, np.newaxis]
+        )
+        # Apply the desired body rotation
+        rest_rotated_foot_locations = (
+            euler2mat(
+                command.roll,
+                command.pitch,
+                self.smoothed_yaw,
+            )
+            @ state.foot_locations
+        )
+        return rest_rotated_foot_locations
+
+    def set_pose_to_default(self, state):
         state.foot_locations = (
             self.config.default_stance
             + np.array([0, 0, self.config.default_z_ref])[:, np.newaxis]
         )
-        state.joint_angles = controller.inverse_kinematics(
+        state.joint_angles = self.inverse_kinematics(
             state.foot_locations, self.config
         )
+
+    def state_hands_proc(self, on_off, state, command):
+        """ HANDS [お手] 機能の処理 (REST ポーズ共通)
+
+        Args:
+            on_off (_type_): HANDS or REST
+            state (_type_): _description_
+            command (_type_): _description_
+        """
+        '''
+        print(f"command.yaw_rate {command.yaw_rate:+07.2f}, "
+            f"command.pitch {command.pitch:+07.2f}, state.pitch {state.pitch:+07.2f}, ",
+            f"command.roll {command.roll:+07.2f}, state.roll {state.roll:+07.2f}")
+        '''
+        # 各ローカル変数の初期化
+        _yaw_rate = command.yaw_rate
+        _pitch = command.pitch
+        hands_opx = float(0)
+        hands_opy = float(0)
+        hands_push = float(0)
+
+        # HANDS 前足操作用の hands_smoothed_yaw, hands_smoothed_push の更新
+        _yaw_proportion = _yaw_rate / self.config.max_yaw_rate
+        self.hands_smoothed_yaw += (
+            self.config.dt
+            * clipped_first_order_filter(
+                self.hands_smoothed_yaw,
+                _yaw_proportion * - self.config.max_stance_yaw,
+                self.config.max_stance_yaw_rate,
+                0.25
+            )
+        )
+        self.hands_smoothed_push += (
+            self.config.dt
+            * clipped_first_order_filter(
+                self.hands_smoothed_push,
+                command.hands_event_arg_PUSH,
+                4.0,
+                0.25
+            )
+        )
+
+        # REST -> HANDS の状態変化が起きた瞬間の処理
+        if on_off and state.pre_state == RState.REST:
+            # hands_tick を開始する (HANDS用の時間経過開始)
+            self.hands_tick = int(0)
+            self.hands_switch_RL = command.hands_event_arg_RL
+            print("start HANDS -", "L" if self.hands_switch_RL else "R")
+
+            # 差分行列 hands_pose_dt を得る
+            if self.hands_switch_RL == 0: # HANDS 操作 右前脚FR(0) or 左前脚FL(1)
+                self.hands_pose_dt = self.config.hands_R_pose / self.config.hands_ticks
+            else:
+                self.hands_pose_dt = self.config.hands_L_pose / self.config.hands_ticks
+
+        # HANDS 動作中は右スティックで姿勢制御できなくなる代わりに、"前足だけ" を操作できるようにする
+        # "HANDS 時間経過中" ならば command.yaw_rate, command.pitch の指定値を盗んで HANDS 動作のパラメータとする
+        # 元の command.yaw_rate, command.pitch はポーズ生成処理に対して 0 指定にしておく
+        if self.hands_tick != 0:
+            command.yaw_rate = 0
+            command.pitch = 0
+            hands_opx = _pitch / (self.config.max_pitch - self.config.pitch_deadband)
+            hands_opy = self.hands_smoothed_yaw / self.config.max_stance_yaw
+            hands_opx = max(-1.0, min(hands_opx, 0.5))
+            hands_opy = max(-1.0, min(hands_opy, 1.0))
+            hands_push = max(0.0, min(self.hands_smoothed_push, 1.0))
+            # print(f"switch_RL {self.switch_RL}, hands_opx,opy {hands_opx:+07.2f}, {hands_opy:+07.2f}, hands_push {hands_push:+07.2f}")
+
+        # REST 状態(HANDS実装前)と同じポーズ生成処理をする
+        #   標準姿勢 +command指示 Yaw,Pitch,Roll,Height 姿勢制御を計算した後の foot_locations行列を得る
+        #   foot_locations行列 = [X Y Z] [FR FL BL BR]
+        foot_locations = self.set_pose_to_rest(state, command)
+
+        if self.hands_tick != 0:    # HANDS 時間経過中ならば
+            # foot_location行列に 差分行列 hands_pose_dt * tick を差し込む
+            foot_locations += (self.hands_pose_dt * self.hands_tick)
+            
+            # foot_location行列に 右スティック操作を差し込む
+            foot_locations[0][self.hands_switch_RL] += (self.config.hands_opx_dist * hands_opx)
+            foot_locations[1][self.hands_switch_RL] += (self.config.hands_opy_dist * hands_opy)
+            foot_locations[2][self.hands_switch_RL] += (self.config.hands_opz_dist * hands_push)
+
+        # 逆運動学計算し joint_angled 行列(12自由度)を得る
+        state.joint_angles = self.inverse_kinematics(foot_locations, self.config)
+
+        if on_off:
+            # HANDS 状態では ticks に向けて tick を進める
+            self.hands_tick += 1
+            self.hands_tick = min(self.hands_tick, self.config.hands_ticks - 1)
+        else:
+            # REST 状態では 0 に向けて tick を戻す（逆転動作をさせる）
+            self.hands_tick -= 1
+            self.hands_tick = max(self.hands_tick, 0)
+
+        # command 現行処理の整合性を保つために値を元に戻しておく
+        command.yaw_rate = _yaw_rate
+        command.pitch = _pitch
+        return
