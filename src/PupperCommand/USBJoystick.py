@@ -107,6 +107,10 @@ class USBJoystick():
                     vkey = 'button_l3'
                 if js_number == 9:
                     vkey = 'button_r3'
+                if js_number == 10:
+                    vkey = 'button_l3'
+                if js_number == 11:
+                    vkey = 'button_r3'
                 if vkey != False:
                     if js_value == 1:
                         self.v[vkey] = True
