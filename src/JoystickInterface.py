@@ -23,6 +23,7 @@ class JoystickInterface:
         self.auto_trot_counter = 0
 
         self.rx_ry_switch = False
+        self.rx_lx_switch = False
         self.last_msg = self.get_null_joymsg()
 
         self.JOYSOCK_HOST = 'localhost'
@@ -59,7 +60,12 @@ class JoystickInterface:
             if msg["long_square"]:
                 msg["long_square"] = False
                 self.rx_ry_switch = not self.rx_ry_switch
-                print('RX/RY reverse')
+                print(f'RX/RY switch {self.rx_ry_switch}')
+
+            if msg["long_triangle"]:
+                msg["long_triangle"] = False
+                self.rx_lx_switch = not self.rx_lx_switch
+                print(f'RX/LX switch {self.rx_lx_switch}')
 
             ####### Handle discrete commands ########
             # for Auto trot added function
@@ -75,10 +81,14 @@ class JoystickInterface:
             gait_toggle = msg["R1"]
             now_trot = (state.now_state == RState.TROT)
             input_move_on = False
+
             msg_val_lx = float(msg["lx"])
             msg_val_ly = float(msg["ly"])
             msg_val_rx = float(msg["rx"])
             msg_val_ry = float(msg["ry"])
+            if self.rx_lx_switch:
+                msg_val_rx, msg_val_lx = msg_val_lx, msg_val_rx
+
             if(abs(msg_val_lx) >= self.auto_trot_sensitivity):
                 input_move_on = True
             if(abs(msg_val_ly) >= self.auto_trot_sensitivity):
