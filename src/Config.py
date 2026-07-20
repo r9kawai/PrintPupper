@@ -61,7 +61,7 @@ class Configuration:
         self.LEG_L1 = 0.110
         self.LEG_L2 = 0.120
         self.LEG_UNPRALLEL_L3 = 0.060
-        self.LEG_UNPRALLEL_L4 = 0.060
+        self.LEG_UNPRALLEL_L4 = 0.050
         self.LEG_UNPRALLEL_L5 = 0.090
         self.UNPRALLEL_ofstX = -0.005
         self.UNPRALLEL_ofstY =  0.025
@@ -72,18 +72,18 @@ class Configuration:
         self.x_center_of_gravity = 0.007
         self.x_shift_front = self.x_center_of_gravity + 0.010
         self.x_shift_back =  self.x_center_of_gravity - 0.010
-        self.default_z_ref = -0.165
+        self.default_z_ref = -0.170
         self.min_z_ref = self.default_z_ref
-        self.max_z_ref = self.default_z_ref + 0.050
+        self.max_z_ref = self.default_z_ref + 0.040
         self.z_delta_as_down_speed = 0.020
         self.z_delta_as_down_speed_rate = 0.4
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.32
-        self.max_x_velocity_minus = 0.12
-        self.max_y_velocity = 0.14
-        self.max_yaw_rate = 1.2
-        self.max_pitch = 25 * np.pi / 180.0
+        self.max_x_velocity = 0.22
+        self.max_x_velocity_minus = 0.11
+        self.max_y_velocity = 0.10
+        self.max_yaw_rate = 1.0
+        self.max_pitch = 18 * np.pi / 180.0
         self.max_pitch_as_trot = 7 * np.pi / 180.0
 
         #################### MOVEMENT PARAMS ####################
@@ -113,7 +113,9 @@ class Configuration:
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance = 0.055
+        self.z_clearance_as_normal = 0.050
+        self.z_clearance_as_down = 0.020
+        self.z_clearance = self.z_clearance_as_normal
         self.alpha = (
                   # alpha = 脚を接地している距離の割合
             0.45  # Ratio between touchdown distance and total horizontal stance movement
@@ -129,16 +131,16 @@ class Configuration:
         self.hands_R_pose = np.array([
             [ 0.000, 0.030, 0.030, 0.030],
             [     0,-0.050,     0,     0],
-            [ 0.070,-0.030, 0.060, 0.060],
+            [ 0.035,-0.030, 0.045, 0.045],
         ])
         self.hands_L_pose = np.array([
             [ 0.030, 0.000, 0.030, 0.030],
             [ 0.050,     0,     0,     0],
-            [-0.030, 0.070, 0.060, 0.060],
+            [-0.030, 0.035, 0.045, 0.045],
         ])
-        self.hands_opx_dist = -0.090
+        self.hands_opx_dist = -0.070
         self.hands_opy_dist = -0.040
-        self.hands_opz_dist = -0.080
+        self.hands_opz_dist = -0.040
         # ------------------------------------------------
 
         self.LEG_ORIGINS = np.array(
