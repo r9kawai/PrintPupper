@@ -155,6 +155,9 @@ class JoystickInterface:
             if down_speed:
                 command.horizontal_velocity *= self.config.z_delta_as_down_speed_rate
                 command.yaw_rate *= self.config.z_delta_as_down_speed_rate
+                self.config.z_clearance = self.config.z_clearance_as_down
+            else:
+                self.config.z_clearance = self.config.z_clearance_as_normal
 
             if now_trot or down_speed:
                 max_pitch_ = self.config.max_pitch_as_trot

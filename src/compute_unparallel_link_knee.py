@@ -12,6 +12,7 @@ class compute_unparallel_link_knee:
         self.L5 = config.LEG_UNPRALLEL_L5
         self.ofstX = config.UNPRALLEL_ofstX
         self.ofstY = config.UNPRALLEL_ofstY
+        print(f"L1={self.L1}, L2={self.L2}, L3_offset={self.L3_offset}, L4={self.L4}, L5={self.L5}, ofstX={self.ofstX}, ofstY={self.ofstY}")
         return
 
     def compute(self, theta_leg, theta_knee, mirror):
