@@ -25,7 +25,8 @@ class ServoParams:
 # If you choose 270deg servo, please "touch _servo_type_270deg"
 # if enable "_servo_type_270deg"
         svflg = "_servo_type_270deg"
-        if Path(svflg).is_file():
+        file_path = Path(__file__).parent / svflg
+        if file_path.is_file():
             self.pwm_usec_neutral = 1500
             self.pwm_usec_max = 1500 + 666
             self.pwm_usec_min = 1500 - 666
