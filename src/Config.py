@@ -1,6 +1,7 @@
 import numpy as np
 from ServoCalibration import NEUTRAL_ANGLE_DEGREES
 from enum import Enum
+from pathlib import Path
 
 # TODO: put these somewhere else
 class PWMParams:
@@ -20,9 +21,22 @@ class PWMParams:
 class ServoParams:
     def __init__(self):
         self.pwm_freq = 100
-        self.pwm_usec_max = 2500
-        self.pwm_usec_min = 500
-        self.pwm_usec_neutral = 1500
+
+# If you choose 270deg servo, please "touch _servo_type_270deg"
+# if enable "_servo_type_270deg"
+        svflg = "_servo_type_270deg"
+        if Path(svflg).is_file():
+            self.pwm_usec_neutral = 1500
+            self.pwm_usec_max = 1500 + 666
+            self.pwm_usec_min = 1500 - 666
+        else:
+# default "_servo_type_180deg"
+            svflg = "_servo_type_180deg"
+            self.pwm_usec_neutral = 1500
+            self.pwm_usec_max = 1500 + 1000
+            self.pwm_usec_min = 1500 - 1000
+        print(f"choose {svflg} rotate 1rad in PWM usec {self.pwm_usec_min} - {self.pwm_usec_neutral} - {self.pwm_usec_max}")
+
         self.pwm_usec_range = int(1000000 / self.pwm_freq)
         self.pwm_usec_per_rad = (self.pwm_usec_max - self.pwm_usec_min) / np.pi
 
@@ -72,14 +86,14 @@ class Configuration:
         self.x_center_of_gravity = 0.007
         self.x_shift_front = self.x_center_of_gravity + 0.010
         self.x_shift_back =  self.x_center_of_gravity - 0.010
-        self.default_z_ref = -0.170
+        self.default_z_ref = -0.165
         self.min_z_ref = self.default_z_ref
         self.max_z_ref = self.default_z_ref + 0.040
         self.z_delta_as_down_speed = 0.020
         self.z_delta_as_down_speed_rate = 0.4
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.22
+        self.max_x_velocity = 0.28
         self.max_x_velocity_minus = 0.11
         self.max_y_velocity = 0.10
         self.max_yaw_rate = 1.0
@@ -113,8 +127,8 @@ class Configuration:
 
         #################### SWING ######################
         self.z_coeffs = None
-        self.z_clearance_as_normal = 0.050
-        self.z_clearance_as_down = 0.020
+        self.z_clearance_as_normal = 0.055
+        self.z_clearance_as_down = 0.030
         self.z_clearance = self.z_clearance_as_normal
         self.alpha = (
                   # alpha = 脚を接地している距離の割合
@@ -130,17 +144,17 @@ class Configuration:
         self.hands_ticks = int(self.hands_time / self.dt)
         self.hands_R_pose = np.array([
             [ 0.000, 0.030, 0.030, 0.030],
-            [     0,-0.050,     0,     0],
-            [ 0.035,-0.030, 0.045, 0.045],
+            [ 0.030,-0.050,     0,     0],
+            [ 0.065,-0.030, 0.055, 0.055],
         ])
         self.hands_L_pose = np.array([
             [ 0.030, 0.000, 0.030, 0.030],
-            [ 0.050,     0,     0,     0],
-            [-0.030, 0.035, 0.045, 0.045],
+            [ 0.050,-0.030,     0,     0],
+            [-0.030, 0.065, 0.055, 0.055],
         ])
-        self.hands_opx_dist = -0.070
-        self.hands_opy_dist = -0.040
-        self.hands_opz_dist = -0.040
+        self.hands_opx_dist = -0.085
+        self.hands_opy_dist = -0.035
+        self.hands_opz_dist = -0.075
         # ------------------------------------------------
 
         self.LEG_ORIGINS = np.array(
